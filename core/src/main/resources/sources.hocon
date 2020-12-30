@@ -1,0 +1,24 @@
+local-jenkins {
+  type = file
+  latest-version = "/path/to/jenkins/home/job/%job%/lastSuccessfulBuild/buildNumber"
+  download = "/path/to/jenkins/home/job/%job%/lastSuccessfulBuild/artifact/target/%target%.jar"
+  required-placeholders = [
+    job
+    target
+  ]
+}
+own-jenkins {
+  type = direct
+  latest-version = "https://ci.example.com/job/%job%/lastSuccessfulBuild/buildNumber"
+  download = "https://ci.example.com/job/%job%/lastSuccessfulBuild/artifact/target/%target%.jar"
+  required-placeholders = [
+    job
+    target
+  ]
+}
+own-teamcity {
+  type = teamcity
+  url = "https://ci.example.com/"
+  # Optional: Authentication Bearer Token, if not specified then guest=1 is appended
+  token = "45a3fa3f"
+}

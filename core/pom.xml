@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <groupId>dev.phoenix616.updater</groupId>
+        <artifactId>parent</artifactId>
+        <version>parent</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>core</artifactId>
+    <version>${version.core}</version>
+
+    <repositories>
+        <repository>
+            <id>minebench-repo</id>
+            <url>https://repo.minebench.de/</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.typesafe</groupId>
+            <artifactId>config</artifactId>
+            <version>${version.hocon}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>de.themoep</groupId>
+            <artifactId>minedown-adventure</artifactId>
+            <version>${version.minedown}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-api</artifactId>
+            <version>4.3.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>${version.caffeine}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>${version.gson}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+</project>

@@ -1,0 +1,14 @@
+SpigotPlugin {
+  # Available sources are github, gitlab, bukkit and spigot releases as well as any other sources defined in the sources.hocon file
+  source = spigot
+  placeholders {
+    resourceid = 12345
+  }
+}
+GithubPlugin {
+  source = github
+  placeholders {
+    user = GitHubUsername
+    repository = PluginRepository
+  }
+}

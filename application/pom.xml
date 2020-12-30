@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>dev.phoenix616.updater</groupId>
+        <artifactId>parent</artifactId>
+        <version>parent</version>
+    </parent>
+
+    <name>PhoenixUpdater</name>
+
+    <artifactId>application</artifactId>
+    <version>${version.application}</version>
+
+    <properties>
+        <build.number>${buildNumber}</build.number>
+        <application.version>${project.version} ${buildDescription}</application.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>${groupId}</groupId>
+            <artifactId>core</artifactId>
+            <version>${version.core}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>${version.gson}</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.name}</finalName>
+        <directory>../target/</directory>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+            <resource>
+                <directory>${project.basedir}/..</directory>
+                <includes>
+                    <include>LICENSE</include>
+                    <include>README.md</include>
+                </includes>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.3</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>dev.phoenix616.updater.application.Main</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>static_build_number</id>
+            <activation>
+                <property>
+                    <name>!env.BUILD_NUMBER</name>
+                </property>
+            </activation>
+            <properties>
+                <buildNumber>0</buildNumber>
+                <buildDescription>(compiled at ${maven.build.timestamp})</buildDescription>
+            </properties>
+        </profile>
+        <profile>
+            <id>dynamic_build_number</id>
+            <activation>
+                <property>
+                    <name>env.BUILD_NUMBER</name>
+                </property>
+            </activation>
+            <properties>
+                <buildNumber>${env.BUILD_NUMBER}</buildNumber>
+                <buildDescription>(build ${env.BUILD_NUMBER})</buildDescription>
+            </properties>
+        </profile>
+    </profiles>
+
+</project>
