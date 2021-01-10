@@ -25,6 +25,7 @@ import dev.phoenix616.updater.Updater;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -43,13 +44,26 @@ public class FileSource extends UpdateSource{
 
     @Override
     public String getLatestVersion(PluginConfig config) {
-        try {
-            List<String> lines = Files.readAllLines(new File(new Replacer().replace(config.getPlaceholders()).replaceIn(latestVersion)).toPath());
-            if (!lines.isEmpty()) {
-                return lines.get(0);
+        File file = new File(new Replacer().replace(config.getPlaceholders()).replaceIn(latestVersion));
+        if (Files.isSymbolicLink(file.toPath())) {
+            try {
+                Path linked = Files.readSymbolicLink(file.toPath());
+                if (Files.isDirectory(linked)) {
+                    return linked.getFileName().toString();
+                }
+            } catch (IOException e) {
+                updater.log(Level.SEVERE, "Error while trying to get latest version for " + config.getName() + " from source " + getName() + "! " + e.getMessage());
             }
-        } catch (IOException e) {
-            updater.log(Level.SEVERE, "Error while trying to get latest version for " + config.getName() + " from source " + getName() + "! " + e.getMessage());
+        }
+        if (file.isFile()) {
+            try {
+                List<String> lines = Files.readAllLines(file.toPath());
+                if (!lines.isEmpty()) {
+                    return lines.get(0);
+                }
+            } catch (IOException e) {
+                updater.log(Level.SEVERE, "Error while trying to get latest version for " + config.getName() + " from source " + getName() + "! " + e.getMessage());
+            }
         }
         return null;
     }
