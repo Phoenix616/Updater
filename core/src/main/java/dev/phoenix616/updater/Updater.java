@@ -349,12 +349,12 @@ public abstract class Updater {
                         File versionedFile = new File(getTargetFolder(), plugin.getFileName(latestVersion));
                         try {
                             Files.move(downloadedFile.toPath(), versionedFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                            Files.createSymbolicLink(pluginFile.toPath(), versionedFile.toPath());
+                            Files.createSymbolicLink(pluginFile.toPath(), getTargetFolder().toPath().relativize(versionedFile.toPath()));
                             sender.sendMessage(Level.INFO, "Linked " + pluginFile + " to " + versionedFile);
                         } catch (IOException e) {
                             sender.sendMessage(Level.WARNING, "Failed to create symbolic link from " + pluginFile + " to " + versionedFile + "! (" + e.getMessage() + ") Creating hard link.");
                             try {
-                                Files.createLink(pluginFile.toPath(), versionedFile.toPath());
+                                Files.createLink(getTargetFolder().toPath(), versionedFile.toPath());
                                 sender.sendMessage(Level.INFO, "Linked " + pluginFile + " to " + versionedFile);
                             } catch (IOException e1) {
                                 sender.sendMessage(Level.SEVERE, "Error while linking!", e1);
