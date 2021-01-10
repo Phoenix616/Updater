@@ -156,9 +156,7 @@ public abstract class Updater {
         boolean dontLink = getDontLink();
 
         String par = "";
-        int i = 0;
-        while (i + 1 < args.length) {
-            i++;
+        for (int i = 0; i < args.length; i++) {
             int start = 0;
             if (args[i].startsWith("-")) {
                 start = 1;
