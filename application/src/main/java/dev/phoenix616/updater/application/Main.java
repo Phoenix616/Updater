@@ -45,6 +45,15 @@ public class Main {
         NAME = p.getProperty("application.name");
         VERSION = p.getProperty("application.version");
 
+        System.out.print(
+                NAME + " " + VERSION
+                + "\n"
+                + "Copyright (C) 2020 Max Lee aka Phoenix616 (max@themoep.de)\n"
+                + "    By using this program you agree to the terms of the AGPLv3\n"
+                + "    The full license text can be found here: https://phoenix616.dev/licenses/agpl-v3.txt\n"
+                + "    This program's source is available here: https://github.com/Phoenix616/Updater\n"
+        );
+
         Updater updater = new Updater(null) {
 
             @Override
