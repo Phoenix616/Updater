@@ -24,6 +24,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import de.themoep.minedown.adventure.Replacer;
+import dev.phoenix616.updater.ContentType;
 import dev.phoenix616.updater.PluginConfig;
 import dev.phoenix616.updater.Updater;
 
@@ -74,9 +75,11 @@ public class GitHubSource extends UpdateSource {
                                     && ((JsonObject) release).get("assets").isJsonArray()) {
                                 for (JsonElement asset : ((JsonObject) release).getAsJsonArray("assets")) {
                                     if (asset.isJsonObject()
-                                            && ((JsonObject) asset).has("content_type")
-                                            && Updater.CONTENT_TYPE_JAR.equals(((JsonObject) asset).get("content_type").getAsString())) {
-                                        return ((JsonObject) release).get("tag_name").getAsString();
+                                            && ((JsonObject) asset).has("content_type")) {
+                                        String contentType = ((JsonObject) asset).get("content_type").getAsString();
+                                        if (ContentType.JAR.matches(contentType) || ContentType.ZIP.matches(contentType)) {
+                                            return ((JsonObject) release).get("tag_name").getAsString();
+                                        }
                                     }
                                 }
                             }
@@ -116,33 +119,35 @@ public class GitHubSource extends UpdateSource {
                                     if (asset.isJsonObject()
                                             && ((JsonObject) asset).has("browser_download_url")
                                             && ((JsonObject) asset).has("content_type")
-                                            && ((JsonObject) asset).has("name")
-                                            && Updater.CONTENT_TYPE_JAR.equals(((JsonObject) asset).get("content_type").getAsString())) {
-                                        String version = ((JsonObject) release).get("tag_name").getAsString();
-                                        File target = new File(updater.getTempFolder(), ((JsonObject) asset).get("name").getAsString());
+                                            && ((JsonObject) asset).has("name")) {
+                                        String contentType = ((JsonObject) asset).get("content_type").getAsString();
+                                        if (ContentType.JAR.matches(contentType) || ContentType.ZIP.matches(contentType)) {
+                                            String version = ((JsonObject) release).get("tag_name").getAsString();
+                                            File target = new File(updater.getTempFolder(), ((JsonObject) asset).get("name").getAsString());
 
-                                        try {
-                                            URL source = new URL(((JsonObject) asset).get("browser_download_url").getAsString());
+                                            try {
+                                                URL source = new URL(((JsonObject) asset).get("browser_download_url").getAsString());
 
-                                            HttpURLConnection con = (HttpURLConnection) source.openConnection();
-                                            con.setRequestProperty("User-Agent", updater.getUserAgent());
-                                            con.addRequestProperty("Accept", API_HEADER);
-                                            con.addRequestProperty("Accept", "application/octet-stream");
-                                            if (config.getPlaceholders().containsKey("token")) {
-                                                con.addRequestProperty("Authorization", "token " + config.getPlaceholders().get("token"));
-                                            } else if (config.getPlaceholders().containsKey("username") && config.getPlaceholders().containsKey("password")) {
-                                                String userPass = config.getPlaceholders().get("username") + ":" + config.getPlaceholders().get("password");
-                                                con.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString(userPass.getBytes()));
-                                            }
-                                            con.setUseCaches(false);
-                                            con.connect();
-                                            try (InputStream in = con.getInputStream()) {
-                                                if (Files.copy(in, target.toPath(), StandardCopyOption.REPLACE_EXISTING) > 0) {
-                                                    return target;
+                                                HttpURLConnection con = (HttpURLConnection) source.openConnection();
+                                                con.setRequestProperty("User-Agent", updater.getUserAgent());
+                                                con.addRequestProperty("Accept", API_HEADER);
+                                                con.addRequestProperty("Accept", "application/octet-stream");
+                                                if (config.getPlaceholders().containsKey("token")) {
+                                                    con.addRequestProperty("Authorization", "token " + config.getPlaceholders().get("token"));
+                                                } else if (config.getPlaceholders().containsKey("username") && config.getPlaceholders().containsKey("password")) {
+                                                    String userPass = config.getPlaceholders().get("username") + ":" + config.getPlaceholders().get("password");
+                                                    con.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString(userPass.getBytes()));
                                                 }
+                                                con.setUseCaches(false);
+                                                con.connect();
+                                                try (InputStream in = con.getInputStream()) {
+                                                    if (Files.copy(in, target.toPath(), StandardCopyOption.REPLACE_EXISTING) > 0) {
+                                                        return target;
+                                                    }
+                                                }
+                                            } catch (IOException e) {
+                                                updater.log(Level.SEVERE, "Error while trying to download update " + version + " for " + config.getName() + " from source " + getName() + "! " + e.getMessage());
                                             }
-                                        } catch (IOException e) {
-                                            updater.log(Level.SEVERE, "Error while trying to download update " + version + " for " + config.getName() + " from source " + getName() + "! " + e.getMessage());
                                         }
                                     }
                                 }
