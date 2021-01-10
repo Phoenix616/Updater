@@ -103,7 +103,7 @@ public abstract class Updater {
                                 this,
                                 sourceConfig.getString("latest-version"),
                                 sourceConfig.getString("download"),
-                                sourceConfig.getStringList("required-placeholders")
+                                sourceConfig.hasPath("required-placeholders") ? sourceConfig.getStringList("required-placeholders") : Collections.emptyList()
                         ));
                         break;
                     case DIRECT:
@@ -112,7 +112,7 @@ public abstract class Updater {
                                 this,
                                 sourceConfig.getString("latest-version"),
                                 sourceConfig.getString("download"),
-                                sourceConfig.getStringList("required-placeholders")
+                                sourceConfig.hasPath("required-placeholders") ? sourceConfig.getStringList("required-placeholders") : Collections.emptyList()
                         ));
                         break;
                     case TEAMCITY:
