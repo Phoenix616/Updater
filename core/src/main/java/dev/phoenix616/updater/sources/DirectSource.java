@@ -63,10 +63,10 @@ public class DirectSource extends UpdateSource {
     public File downloadUpdate(PluginConfig config) {
         String version = getLatestVersion(config);
         if (version != null) {
-            File target = new File(updater.getTargetFolder(), config.getFileName(version));
 
             try {
                 URL source = new URL(new Replacer().replace(config.getPlaceholders()).replaceIn(download));
+                File target = new File(updater.getTempFolder(), source.getPath().substring(source.getPath().lastIndexOf('/') + 1));
 
                 HttpURLConnection con = (HttpURLConnection) source.openConnection();
                 con.setUseCaches(false);

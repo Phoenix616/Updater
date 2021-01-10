@@ -46,14 +46,17 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -65,6 +68,9 @@ public abstract class Updater {
 
     public static final Pattern GITHUB_PATTERN = Pattern.compile(".*https?://(?:www\\.)?github\\.com/(?<user>[\\w\\-]+)/(?<repo>[\\w\\-]+)(?:[/#].*)?.*");
     public static final Pattern SPIGOT_PATTERN = Pattern.compile(".*https?://(?:www\\.)?spigotmc\\.org/resources/.*\\.(?<id>\\d+)(?:[/#].*)?.*");
+    public static final String CONTENT_TYPE_JAR = "application/java-archive";
+    public static final String CONTENT_TYPE_ZIP = "application/x-zip";
+    public static final String CONTENT_TYPE_ZIP_COMPRESSED = "application/x-zip-compressed";
     private Map<String, UpdateSource> sources = new HashMap<>();
     private Map<String, PluginConfig> plugins = new HashMap<>();
 
@@ -300,22 +306,56 @@ public abstract class Updater {
 
             if (update) {
                 sender.sendMessage(Level.INFO, "Downloading " + plugin.getName() + " " + latestVersion + "...");
-                File updatedFile = plugin.getSource().downloadUpdate(plugin);
-                if (updatedFile != null) {
-                    System.out.print(" Done!");
+                File downloadedFile = plugin.getSource().downloadUpdate(plugin);
+                if (downloadedFile != null) {
+                    sender.sendMessage(Level.INFO, "Done!");
+                    try {
+                        String contentType = Files.probeContentType(downloadedFile.toPath());
+                        if (CONTENT_TYPE_JAR.equals(contentType)) {
+                            sender.sendMessage(Level.INFO, "Successfully downloaded plugin jar file!");
+                        } else if (CONTENT_TYPE_ZIP.equals(contentType) || CONTENT_TYPE_ZIP_COMPRESSED.equals(contentType)) {
+                            sender.sendMessage(Level.INFO, "Downloaded a zip archive. Trying to unpack it...");
+
+                            ZipFile zip = new ZipFile(downloadedFile);
+
+                            Optional<? extends ZipEntry> entry = zip.stream().filter(e -> e.getName().endsWith(".jar")).min((o1, o2) -> Long.compare(o2.getSize(), o1.getSize()));
+                            if (entry.isPresent()) {
+                                downloadedFile = new File(getTempFolder(), entry.get().getName().substring(entry.get().getName().lastIndexOf('/')));
+                                try {
+                                    Files.copy(zip.getInputStream(entry.get()), downloadedFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                                } catch (IOException e) {
+                                    sender.sendMessage(Level.SEVERE, "Error while trying to unpack file " + entry.get().getName() + " from " + zip.getName() + ". Aborting!", e);
+                                    return false;
+                                }
+                            } else {
+                                sender.sendMessage(Level.SEVERE, "Unable to find jar file in zip archive. Aborting!");
+                                return false;
+                            }
+                        } else if (contentType != null) {
+                            sender.sendMessage(Level.INFO, "Downloaded a " + contentType + " file which isn't supported. Trying to link it anyways...");
+                        } else {
+                            sender.sendMessage(Level.INFO, "Unable to detect file content type... hoping for the best :S");
+                        }
+                    } catch (IOException e) {
+                        sender.sendMessage(Level.SEVERE, "Error while trying to get type of downloaded file!", e);
+                    }
+
+
                     if (!dontLink) {
                         File pluginFile = new File(getTargetFolder(), plugin.getName() + ".jar");
                         if (pluginFile.exists()) {
                             pluginFile.delete();
                         }
+                        File versionedFile = new File(getTargetFolder(), plugin.getFileName(latestVersion));
                         try {
-                            Files.createSymbolicLink(pluginFile.toPath(), updatedFile.toPath());
-                            sender.sendMessage(Level.INFO, "Linked " + pluginFile + " to " + updatedFile);
+                            Files.move(downloadedFile.toPath(), versionedFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                            Files.createSymbolicLink(pluginFile.toPath(), versionedFile.toPath());
+                            sender.sendMessage(Level.INFO, "Linked " + pluginFile + " to " + versionedFile);
                         } catch (IOException e) {
-                            sender.sendMessage(Level.WARNING, "Failed to create symbolic link from " + pluginFile + " to " + updatedFile + "! (" + e.getMessage() + ") Creating hard link.");
+                            sender.sendMessage(Level.WARNING, "Failed to create symbolic link from " + pluginFile + " to " + versionedFile + "! (" + e.getMessage() + ") Creating hard link.");
                             try {
-                                Files.createLink(pluginFile.toPath(), updatedFile.toPath());
-                                sender.sendMessage(Level.INFO, "Linked " + pluginFile + " to " + updatedFile);
+                                Files.createLink(pluginFile.toPath(), versionedFile.toPath());
+                                sender.sendMessage(Level.INFO, "Linked " + pluginFile + " to " + versionedFile);
                             } catch (IOException e1) {
                                 sender.sendMessage(Level.SEVERE, "Error while linking!", e1);
                                 return false;
@@ -507,11 +547,13 @@ public abstract class Updater {
         }
     }
 
-    public File getTargetFolder() {
+    private File getTargetFolder() {
         return targetFolder;
     }
 
     public abstract void log(Level level, String message, Throwable... exception);
+
+    public abstract File getTempFolder();
 
     protected abstract boolean getDontLink();
 

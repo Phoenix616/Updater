@@ -84,7 +84,7 @@ public class SpigotSource extends UpdateSource {
                             && ((JsonObject) json).has("id")) {
                         String version = ((JsonObject) json).get("name").getAsString();
                         long id = ((JsonObject) json).get("id").getAsLong();
-                        File target = new File(updater.getTargetFolder(), config.getFileName(version));
+                        File target = new File(updater.getTempFolder(), config.getFileName(version));
 
                         URL source = new URL(new Replacer().replace(config.getPlaceholders()).replace("versionid", String.valueOf(id)).replaceIn(DOWNLOAD_URL));
                         try {

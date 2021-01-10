@@ -21,6 +21,7 @@ package dev.phoenix616.updater.application;
 import dev.phoenix616.updater.Sender;
 import dev.phoenix616.updater.Updater;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -54,6 +55,12 @@ public class Main {
                 + "    This program's source is available here: https://github.com/Phoenix616/Updater\n"
         );
 
+        File tempFolder = new File(System.getProperty("java.io.tmpdir"), NAME);
+
+        if (!tempFolder.exists()) {
+            tempFolder.mkdirs();
+        }
+
         Updater updater = new Updater(null) {
 
             @Override
@@ -67,6 +74,11 @@ public class Main {
                 for (Throwable throwable : exception) {
                     throwable.printStackTrace();
                 }
+            }
+
+            @Override
+            public File getTempFolder() {
+                return tempFolder;
             }
 
             @Override
@@ -94,5 +106,6 @@ public class Main {
                     " -c, --check-only                  Only check for new versions, don't download updates (Optional)\n" +
                     " -d, --dont-link                   Only download new versions, don't link them (Optional)\n");
         }
+        tempFolder.delete();
     }
 }

@@ -46,7 +46,6 @@ public class GitHubSource extends UpdateSource {
 
     private static final List<String> REQUIRED_PLACEHOLDERS = Arrays.asList("user");
     private static final String API_HEADER = "application/vnd.github.v3+json";
-    private static final String CONTENT_TYPE_JAR = "application/java-archive";
     private static final String RELEASES_URL = "https://api.github.com/repos/%user%/%repository%/releases";
 
     public GitHubSource(Updater updater) {
@@ -76,7 +75,7 @@ public class GitHubSource extends UpdateSource {
                                 for (JsonElement asset : ((JsonObject) release).getAsJsonArray("assets")) {
                                     if (asset.isJsonObject()
                                             && ((JsonObject) asset).has("content_type")
-                                            && CONTENT_TYPE_JAR.equals(((JsonObject) asset).get("content_type").getAsString())) {
+                                            && Updater.CONTENT_TYPE_JAR.equals(((JsonObject) asset).get("content_type").getAsString())) {
                                         return ((JsonObject) release).get("tag_name").getAsString();
                                     }
                                 }
@@ -117,9 +116,10 @@ public class GitHubSource extends UpdateSource {
                                     if (asset.isJsonObject()
                                             && ((JsonObject) asset).has("browser_download_url")
                                             && ((JsonObject) asset).has("content_type")
-                                            && CONTENT_TYPE_JAR.equals(((JsonObject) asset).get("content_type").getAsString())) {
+                                            && ((JsonObject) asset).has("name")
+                                            && Updater.CONTENT_TYPE_JAR.equals(((JsonObject) asset).get("content_type").getAsString())) {
                                         String version = ((JsonObject) release).get("tag_name").getAsString();
-                                        File target = new File(updater.getTargetFolder(), config.getFileName(version));
+                                        File target = new File(updater.getTempFolder(), ((JsonObject) asset).get("name").getAsString());
 
                                         try {
                                             URL source = new URL(((JsonObject) asset).get("browser_download_url").getAsString());

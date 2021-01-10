@@ -73,7 +73,7 @@ public class FileSource extends UpdateSource{
         String version = getLatestVersion(config);
         if (version != null) {
             File source = new File(new Replacer().replace(config.getPlaceholders()).replaceIn(download));
-            File target = new File(updater.getTargetFolder(), config.getFileName(version));
+            File target = new File(updater.getTempFolder(), source.getName());
 
             try {
                 return Files.copy(source.toPath(), target.toPath()).toFile();
