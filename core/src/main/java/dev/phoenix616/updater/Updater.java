@@ -49,7 +49,6 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -69,8 +68,9 @@ public abstract class Updater {
     public static final Pattern GITHUB_PATTERN = Pattern.compile(".*https?://(?:www\\.)?github\\.com/(?<user>[\\w\\-]+)/(?<repo>[\\w\\-]+)(?:[/#].*)?.*");
     public static final Pattern SPIGOT_PATTERN = Pattern.compile(".*https?://(?:www\\.)?spigotmc\\.org/resources/.*\\.(?<id>\\d+)(?:[/#].*)?.*");
     public static final String CONTENT_TYPE_JAR = "application/java-archive";
-    public static final String CONTENT_TYPE_ZIP = "application/x-zip";
-    public static final String CONTENT_TYPE_ZIP_COMPRESSED = "application/x-zip-compressed";
+    public static final String CONTENT_TYPE_X_JAR = "application/x-java-archive";
+    public static final String CONTENT_TYPE_X_ZIP = "application/x-zip";
+    public static final String CONTENT_TYPE_X_ZIP_COMPRESSED = "application/x-zip-compressed";
     private Map<String, UpdateSource> sources = new HashMap<>();
     private Map<String, PluginConfig> plugins = new HashMap<>();
 
@@ -311,9 +311,9 @@ public abstract class Updater {
                     sender.sendMessage(Level.INFO, "Done!");
                     try {
                         String contentType = Files.probeContentType(downloadedFile.toPath());
-                        if (CONTENT_TYPE_JAR.equals(contentType)) {
+                        if (CONTENT_TYPE_JAR.equals(contentType) || CONTENT_TYPE_X_JAR.equals(contentType)) {
                             sender.sendMessage(Level.INFO, "Successfully downloaded plugin jar file!");
-                        } else if (CONTENT_TYPE_ZIP.equals(contentType) || CONTENT_TYPE_ZIP_COMPRESSED.equals(contentType)) {
+                        } else if (CONTENT_TYPE_X_ZIP.equals(contentType) || CONTENT_TYPE_X_ZIP_COMPRESSED.equals(contentType)) {
                             sender.sendMessage(Level.INFO, "Downloaded a zip archive. Trying to unpack it...");
 
                             ZipFile zip = new ZipFile(downloadedFile);
