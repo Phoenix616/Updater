@@ -42,6 +42,15 @@ public class PluginConfig {
         return placeholders;
     }
 
+    public Map<String, String> getPlaceholders(String nameFallback) {
+        if (getPlaceholders().containsKey(nameFallback)) {
+            return getPlaceholders();
+        }
+        Map<String, String> placeholders = new LinkedHashMap<>(getPlaceholders());
+        placeholders.put(nameFallback, getName());
+        return placeholders;
+    }
+
     public String getFileName(String version) {
         return Replacer.replaceIn(fileNameFormat, "name", name, "version", version);
     }

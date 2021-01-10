@@ -44,7 +44,7 @@ import java.util.logging.Level;
 
 public class GitHubSource extends UpdateSource {
 
-    private static final List<String> REQUIRED_PLACEHOLDERS = Arrays.asList("user", "repository");
+    private static final List<String> REQUIRED_PLACEHOLDERS = Arrays.asList("user");
     private static final String API_HEADER = "application/vnd.github.v3+json";
     private static final String CONTENT_TYPE_JAR = "application/java-archive";
     private static final String RELEASES_URL = "https://api.github.com/repos/%user%/%repository%/releases";
@@ -63,7 +63,7 @@ public class GitHubSource extends UpdateSource {
                 String userPass = config.getPlaceholders().get("username") + ":" + config.getPlaceholders().get("password");
                 Collections.addAll(properties, "Authorization", "Basic " + Base64.getEncoder().encodeToString(userPass.getBytes()));
             }
-            String s = updater.query(new URL(new Replacer().replace(config.getPlaceholders()).replaceIn(RELEASES_URL)), properties.toArray(new String[0]));
+            String s = updater.query(new URL(new Replacer().replace(config.getPlaceholders("repository")).replaceIn(RELEASES_URL)), properties.toArray(new String[0]));
             if (s != null) {
                 try {
                     JsonElement json = new JsonParser().parse(s);
@@ -103,7 +103,7 @@ public class GitHubSource extends UpdateSource {
                 String userPass = config.getPlaceholders().get("username") + ":" + config.getPlaceholders().get("password");
                 Collections.addAll(properties, "Authorization", "Basic " + Base64.getEncoder().encodeToString(userPass.getBytes()));
             }
-            String s = updater.query(new URL(new Replacer().replace(config.getPlaceholders()).replaceIn(RELEASES_URL)), properties.toArray(new String[0]));
+            String s = updater.query(new URL(new Replacer().replace(config.getPlaceholders("repository")).replaceIn(RELEASES_URL)), properties.toArray(new String[0]));
             if (s != null) {
                 try {
                     JsonElement json = new JsonParser().parse(s);

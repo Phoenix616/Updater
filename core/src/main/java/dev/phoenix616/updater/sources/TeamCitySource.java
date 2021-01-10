@@ -43,7 +43,7 @@ import java.util.logging.Level;
 
 public class TeamCitySource extends UpdateSource {
 
-    private static final List<String> REQUIRED_PLACEHOLDERS = Arrays.asList("project","buildtype");
+    private static final List<String> REQUIRED_PLACEHOLDERS = Arrays.asList("buildtype");
     private final static String BUILD_URL = "%apiurl%/app/rest/builds/project:%project%,status:SUCCESS,branch:%branch%,buildType:%buildtype%";
     private final static String ARTIFACTS_URL = "%apiurl%/app/rest/builds/id:%buildid%/artifacts";
     private final static String ARTIFACT_DOWNLOAD_URL = "%apiurl%/app/rest/builds/id:%buildid%/artifacts/content/%filename%";
@@ -79,7 +79,7 @@ public class TeamCitySource extends UpdateSource {
             }
             String s = updater.query(new URL(new Replacer()
                     .replace("apiurl", url, "branch", "master")
-                    .replace(config.getPlaceholders())
+                    .replace(config.getPlaceholders("project"))
                     .replaceIn(getUrl(BUILD_URL))
             ), properties.toArray(new String[0]));
             if (s != null) {
@@ -107,7 +107,7 @@ public class TeamCitySource extends UpdateSource {
             }
             String s = updater.query(new URL(new Replacer()
                     .replace("apiurl", url, "branch", "master")
-                    .replace(config.getPlaceholders())
+                    .replace(config.getPlaceholders("project"))
                     .replaceIn(getUrl(BUILD_URL))
             ), properties.toArray(new String[0]));
             if (s != null) {
@@ -119,7 +119,7 @@ public class TeamCitySource extends UpdateSource {
 
                         String artifactInfo = updater.query(new URL(new Replacer()
                                 .replace("apiurl", url, "buildid", id)
-                                .replace(config.getPlaceholders())
+                                .replace(config.getPlaceholders("project"))
                                 .replaceIn(getUrl(ARTIFACTS_URL))
                         ), properties.toArray(new String[0]));
                         if (artifactInfo != null) {
@@ -136,7 +136,7 @@ public class TeamCitySource extends UpdateSource {
                                         try {
                                             URL source = new URL(new Replacer()
                                                     .replace("apiurl", url, "buildid", id, "filename", fileName)
-                                                    .replace(config.getPlaceholders())
+                                                    .replace(config.getPlaceholders("project"))
                                                     .replaceIn(getUrl(ARTIFACT_DOWNLOAD_URL))
                                             );
 
