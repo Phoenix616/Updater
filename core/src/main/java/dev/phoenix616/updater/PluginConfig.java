@@ -52,7 +52,7 @@ public class PluginConfig {
     }
 
     public String getFileName(String version) {
-        return Replacer.replaceIn(fileNameFormat, "name", name, "version", version);
+        return Replacer.replaceIn(fileNameFormat, "name", name, "version", Updater.sanitize(version));
     }
 
     public String getName() {

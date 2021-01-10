@@ -15,7 +15,7 @@ The following sources can be used for updating:
 
 - [x] Options handling
 - [x] Download and linking logic
-- [ ] Version caching and checking
+- [x] Version caching and checking
 - [ ] Configurator utility
 - [ ] More sources (e.g. CIs like GitHub actions, Travis or Circle. PPs welcome!)
 - [ ] Plugin implementation

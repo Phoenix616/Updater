@@ -23,6 +23,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigException;
 import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigRenderOptions;
 import com.typesafe.config.ConfigValue;
 import com.typesafe.config.ConfigValueFactory;
 import com.typesafe.config.ConfigValueType;
@@ -38,6 +39,7 @@ import dev.phoenix616.updater.sources.UpdateSource;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -66,12 +68,17 @@ public abstract class Updater {
     private Map<String, UpdateSource> sources = new HashMap<>();
     private Map<String, PluginConfig> plugins = new HashMap<>();
 
+    private Config versions;
+
     private final static Config PLUGIN_DEFAULTS = ConfigFactory.empty()
             .withValue("file-name-format", ConfigValueFactory.fromAnyRef("%name%.jar-%version%"));
 
     private Cache<URL, String> queryCache = Caffeine.newBuilder().expireAfterWrite(30, TimeUnit.SECONDS).build();
 
-    public Updater() {
+    private File targetFolder;
+
+    public Updater(File targetFolder) {
+        this.targetFolder = targetFolder;
         loadConfig();
     }
 
@@ -148,8 +155,6 @@ public abstract class Updater {
         boolean checkOnly = false;
         boolean dontLink = getDontLink();
 
-        File targetFolder = getTargetFolder();
-
         String par = "";
         int i = 0;
         while (i + 1 < args.length) {
@@ -211,11 +216,23 @@ public abstract class Updater {
             return true;
         }
 
+        versions = getConfig(new File(targetFolder, "versions.conf"));
+
+        boolean r;
         if (plugin != null) {
-            check(sender, plugin, !checkOnly, dontLink);
+            r = check(sender, plugin, !checkOnly, dontLink);
         } else {
             checkExistingJars(sender);
-            check(sender, !checkOnly, dontLink);
+            r = check(sender, !checkOnly, dontLink);
+        }
+
+        // Check if plugin was updated, if so save versions config
+        if (r && !checkOnly) {
+            try {
+                saveInstalledVersions();
+            } catch (IOException e) {
+                sender.sendMessage(Level.SEVERE, "Failed to save versions file!", e);
+            }
         }
 
         return true;
@@ -270,16 +287,18 @@ public abstract class Updater {
         }
     }
 
-    private void check(Sender sender, boolean update, boolean dontLink) {
+    private boolean check(Sender sender, boolean update, boolean dontLink) {
+        boolean r = false;
         for (PluginConfig plugin : plugins.values()) {
-            check(sender, plugin, update, dontLink);
+            r |= check(sender, plugin, update, dontLink);
         }
+        return r;
     }
 
-    private void check(Sender sender, PluginConfig plugin, boolean update, boolean dontLink) {
+    private boolean check(Sender sender, PluginConfig plugin, boolean update, boolean dontLink) {
         String latestVersion = plugin.getSource().getLatestVersion(plugin);
-        if (latestVersion != null) {
-            sender.sendMessage(Level.INFO, "Found latest version of " + plugin.getName() + " " + latestVersion + " on " + plugin.getSource().getName());
+        if (latestVersion != null && isNewVersion(plugin, latestVersion)) {
+            sender.sendMessage(Level.INFO, "Found new version of " + plugin.getName() + " on " + plugin.getSource().getName() + ": " + latestVersion);
 
             if (update) {
                 sender.sendMessage(Level.INFO, "Downloading " + plugin.getName() + " " + latestVersion + "...");
@@ -288,6 +307,9 @@ public abstract class Updater {
                     System.out.print(" Done!");
                     if (!dontLink) {
                         File pluginFile = new File(getTargetFolder(), plugin.getName() + ".jar");
+                        if (pluginFile.exists()) {
+                            pluginFile.delete();
+                        }
                         try {
                             Files.createSymbolicLink(pluginFile.toPath(), updatedFile.toPath());
                             sender.sendMessage(Level.INFO, "Linked " + pluginFile + " to " + updatedFile);
@@ -297,15 +319,84 @@ public abstract class Updater {
                                 Files.createLink(pluginFile.toPath(), updatedFile.toPath());
                                 sender.sendMessage(Level.INFO, "Linked " + pluginFile + " to " + updatedFile);
                             } catch (IOException e1) {
-                                sender.sendMessage(Level.SEVERE, "Error hilw linking!", e1);
+                                sender.sendMessage(Level.SEVERE, "Error while linking!", e1);
+                                return false;
                             }
                         }
+                        setInstalledVersion(plugin, latestVersion);
+                        return true;
                     }
                 }
+            } else {
+                return true;
             }
         } else {
-            sender.sendMessage(Level.SEVERE, "Unable to find new version for " + plugin.getName() + " from " + plugin.getSource().getType() + " source " + plugin.getSource().getName());
+            sender.sendMessage(Level.SEVERE, "No new version for " + plugin.getName() + " found from " + plugin.getSource().getType() + " source " + plugin.getSource().getName() + " (got " + latestVersion + ")");
         }
+        return false;
+    }
+
+    private boolean isNewVersion(PluginConfig plugin, String latestVersion) {
+        String installedVersion = getInstalledVersion(plugin);
+        if (installedVersion != null) {
+            installedVersion = sanitize(installedVersion);
+            latestVersion = sanitize(latestVersion);
+
+            try {
+                // Try parsing them as build numbers
+                int installedBuild = Integer.parseInt(installedVersion);
+                try {
+                    int latestBuild = Integer.parseInt(latestVersion);
+                    return installedBuild < latestBuild;
+                } catch (NumberFormatException e) {
+                    // if installed is integer but latest isn't then we assume that the format changed and treat it as new
+                    return true;
+                }
+            } catch (NumberFormatException ignored) {}
+
+            if (installedVersion.indexOf('.') > 0 && latestVersion.indexOf('.') > 0) {
+                try {
+                    int[] installedSemVer = parseSemVer(installedVersion);
+                    int[] latestSemVer = parseSemVer(latestVersion);
+                    return compareTo(latestSemVer, installedSemVer) > 0;
+                } catch (NumberFormatException e) {
+                    return true;
+                }
+            }
+        }
+        return true;
+    }
+
+    private int compareTo(int[] latestSemVer, int[] installedSemVer) {
+        for (int i = 0; i < installedSemVer.length && i < latestSemVer.length; i++) {
+            int latestVersionInt = latestSemVer[i];
+            int installedVersionInt = installedSemVer[i];
+            if (latestVersionInt > installedVersionInt) {
+                return 1;
+            } else if (latestVersionInt < installedVersionInt) {
+                return -1;
+            }
+        }
+
+        if (installedSemVer.length < latestSemVer.length) {
+            return 1;
+        } else if (installedSemVer.length > latestSemVer.length) {
+            return -1;
+        }
+        return 0;
+    }
+
+    public static String sanitize(String version) {
+        return version.split("[\\s(\\-#\\[{]", 2)[0];
+    }
+
+    private int[] parseSemVer(String version) throws NumberFormatException {
+        String[] split = version.split("\\.");
+        int[] semVer = new int[split.length];
+        for (int i = 0; i < split.length; i++) {
+            semVer[i] = Integer.parseInt(split[i]);
+        }
+        return semVer;
     }
 
     private Map<String, String> toMap(Config config) {
@@ -335,6 +426,32 @@ public abstract class Updater {
         return plugins.get(plugin.toUpperCase(Locale.ROOT));
     }
 
+    private String getInstalledVersion(PluginConfig plugin) {
+        String pluginKey = plugin.getName().toLowerCase(Locale.ROOT);
+        if (versions.hasPath("plugins." + pluginKey)) {
+            ConfigValue value = versions.getValue("plugins." + pluginKey);
+            if (value.valueType() == ConfigValueType.STRING) {
+                return (String) value.unwrapped();
+            }
+        }
+
+        return null;
+    }
+
+    private void setInstalledVersion(PluginConfig plugin, String version) {
+        versions = versions.withValue("plugins." + plugin.getName().toLowerCase(Locale.ROOT), ConfigValueFactory.fromAnyRef(version));
+    }
+
+    private void saveInstalledVersions() throws IOException {
+        File versionsFile = new File(getTargetFolder(), "versions.conf");
+        if (!versionsFile.exists()) {
+            versionsFile.createNewFile();
+        }
+        try (FileWriter writer = new FileWriter(versionsFile)) {
+            writer.write(versions.resolve().root().render(ConfigRenderOptions.defaults().setOriginComments(false)));
+        }
+    }
+
     private boolean addPlugin(PluginConfig plugin) {
         List<String> requiredPlaceholders = new ArrayList<>();
         for (String requiredPlaceholder : plugin.getSource().getRequiredPlaceholders()) {
@@ -348,7 +465,7 @@ public abstract class Updater {
         }
 
         if (plugin.getSource().getType() == SourceType.SPIGOT) {
-            log(Level.WARNING, "Automatic downloading from SpigotMC.org will most likely fail due to Cloudflare");
+            log(Level.WARNING, "Automatic downloading from SpigotMC.org will most likely fail due to Cloudflare. If the plugin has a GitHub release it will be used though.");
         }
 
         plugins.put(plugin.getName().toUpperCase(Locale.ROOT), plugin);
@@ -357,26 +474,29 @@ public abstract class Updater {
     }
 
     private Config getConfig(String name) {
-        saveResource(name + ".hocon");
+        return getConfig(new File(name + ".conf"));
+    }
+
+    private Config getConfig(File file) {
+        saveResource(file);
         Config fallbackConfig;
         try {
-            fallbackConfig = ConfigFactory.parseResourcesAnySyntax(name + ".hocon");
+            fallbackConfig = ConfigFactory.parseResourcesAnySyntax(file.getName());
         } catch (ConfigException e) {
-            log(Level.SEVERE, "Error while loading " + name + ".hocon fallback config!", e);
-            fallbackConfig = ConfigFactory.empty("Empty " + name + ".hocon fallback due to loading error: " + e.getMessage());
+            log(Level.SEVERE, "Error while loading " + file.getName() + " fallback config!", e);
+            fallbackConfig = ConfigFactory.empty("Empty " + file.getName() + " fallback due to loading error: " + e.getMessage());
         }
         try {
-            return ConfigFactory.parseFile(new File(name + ".hocon")).withFallback(fallbackConfig);
+            return ConfigFactory.parseFile(file).withFallback(fallbackConfig);
         } catch (ConfigException e) {
-            log(Level.SEVERE, "Error while loading " + name + ".hocon config!", e);
+            log(Level.SEVERE, "Error while loading " + file.getPath() + " config!", e);
             return fallbackConfig;
         }
     }
 
-    private void saveResource(String name) {
-        InputStream inputStream = getClass().getResourceAsStream("/" + name);
+    private void saveResource(File file) {
+        InputStream inputStream = getClass().getResourceAsStream("/" + file.getName());
         if (inputStream != null) {
-            File file = new File(name);
             if (!file.exists()) {
                 try {
                     Files.copy(inputStream, file.toPath());
@@ -385,13 +505,15 @@ public abstract class Updater {
                 }
             }
         } else {
-            log(Level.WARNING, "No resource " + name + " found!");
+            log(Level.WARNING, "No resource " + file.getName() + " found!");
         }
     }
 
-    public abstract void log(Level level, String message, Throwable... exception);
+    public File getTargetFolder() {
+        return targetFolder;
+    }
 
-    public abstract File getTargetFolder();
+    public abstract void log(Level level, String message, Throwable... exception);
 
     protected abstract boolean getDontLink();
 

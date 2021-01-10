@@ -119,7 +119,7 @@ public class SpigotSource extends UpdateSource {
                                                         UpdateSource ghSource = updater.getSource(SourceType.GITHUB.name());
                                                         String ghVersion = ghSource.getLatestVersion(config);
                                                         if (ghVersion != null) {
-                                                            if (ghVersion.equalsIgnoreCase(version)) {
+                                                            if (Updater.sanitize(ghVersion).equalsIgnoreCase(Updater.sanitize(version))) {
                                                                 updater.log(Level.INFO, "Found matching release on GitHub: " + ghVersion + ". Downloading it...");
                                                                 return ghSource.downloadUpdate(config);
                                                             } else {

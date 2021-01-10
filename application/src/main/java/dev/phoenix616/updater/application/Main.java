@@ -21,7 +21,6 @@ package dev.phoenix616.updater.application;
 import dev.phoenix616.updater.Sender;
 import dev.phoenix616.updater.Updater;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -46,7 +45,7 @@ public class Main {
         NAME = p.getProperty("application.name");
         VERSION = p.getProperty("application.version");
 
-        Updater updater = new Updater() {
+        Updater updater = new Updater(null) {
 
             @Override
             protected boolean getDontLink() {
@@ -59,11 +58,6 @@ public class Main {
                 for (Throwable throwable : exception) {
                     throwable.printStackTrace();
                 }
-            }
-
-            @Override
-            public File getTargetFolder() {
-                return null;
             }
 
             @Override
