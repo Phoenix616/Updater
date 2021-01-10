@@ -86,8 +86,8 @@ public class Main {
 
         if (!updater.run(sender, args)){
             System.out.print("Usage: " + p.getProperty("application.name") + ".jar <options>\n" +
-                    " -t <path>, --target-folder <path> Only check for new versions, don't download updates (Optional)\n" +
-                    " -p <name>, --plugin <name>        Only check for new versions, don't download updates (Optional)\n" +
+                    " -t <path>, --target-folder <path> Target folder where updates get downloaded to (Required)\n" +
+                    " -p <name>, --plugin <name>        Only check/update one plugin (Optional)\n" +
                     " -c, --check-only                  Only check for new versions, don't download updates (Optional)\n" +
                     " -d, --dont-link                   Only download new versions, don't link them (Optional)\n");
         }
