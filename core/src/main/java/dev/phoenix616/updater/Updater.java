@@ -316,7 +316,9 @@ public abstract class Updater {
 
                             Optional<? extends ZipEntry> entry = zip.stream().filter(e -> e.getName().endsWith(".jar")).min((o1, o2) -> Long.compare(o2.getSize(), o1.getSize()));
                             if (entry.isPresent()) {
-                                downloadedFile = new File(getTempFolder(), entry.get().getName().substring(entry.get().getName().lastIndexOf('/')));
+                                downloadedFile = new File(getTempFolder(), entry.get().getName().contains("/")
+                                        ? entry.get().getName().substring(entry.get().getName().lastIndexOf('/'))
+                                        : entry.get().getName());
                                 try {
                                     Files.copy(zip.getInputStream(entry.get()), downloadedFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                                 } catch (IOException e) {
