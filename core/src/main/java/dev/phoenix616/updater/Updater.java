@@ -367,7 +367,7 @@ public abstract class Updater {
                 return true;
             }
         } else {
-            sender.sendMessage(Level.SEVERE, "No new version for " + plugin.getName() + " found from " + plugin.getSource().getType() + " source " + plugin.getSource().getName() + " (got " + latestVersion + ")");
+            sender.sendMessage(Level.INFO, "No new version for " + plugin.getName() + " found from " + plugin.getSource().getType() + " source " + plugin.getSource().getName() + " (got " + latestVersion + ")");
         }
         return false;
     }
