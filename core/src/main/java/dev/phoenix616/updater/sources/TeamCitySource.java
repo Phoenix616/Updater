@@ -28,6 +28,7 @@ import dev.phoenix616.updater.PluginConfig;
 import dev.phoenix616.updater.Updater;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -96,6 +97,57 @@ public class TeamCitySource extends UpdateSource {
             updater.log(Level.SEVERE, "Invalid URL for getting latest version for " + config.getName() + " from source " + getName() + "! " + e.getMessage());
         }
         return null;
+    }
+
+    @Override
+    public URL getUpdateUrl(PluginConfig config) throws MalformedURLException, FileNotFoundException {
+
+        List<String> properties = new ArrayList<>(Arrays.asList("Accept", "application/json"));
+        if (token != null) {
+            Collections.addAll(properties, "Authorization", "Bearer " + token);
+        }
+        String s = updater.query(new URL(new Replacer()
+                .replace("apiurl", url, "branch", "master")
+                .replace(config.getPlaceholders("project"))
+                .replaceIn(getUrl(BUILD_URL))
+        ), properties.toArray(new String[0]));
+        if (s != null) {
+            try {
+                JsonObject json = new JsonParser().parse(s).getAsJsonObject();
+                if (json.has("number")) {
+                    String id = json.get("id").getAsString();
+
+                    String artifactInfo = updater.query(new URL(new Replacer()
+                            .replace("apiurl", url, "buildid", id)
+                            .replace(config.getPlaceholders("project"))
+                            .replaceIn(getUrl(ARTIFACTS_URL))
+                    ), properties.toArray(new String[0]));
+                    if (artifactInfo != null) {
+                        JsonObject artifactInfoJson = new JsonParser().parse(artifactInfo).getAsJsonObject();
+                        if (artifactInfoJson.has("file")) {
+                            JsonArray files = artifactInfoJson.getAsJsonArray("file");
+                            for (JsonElement file : files) {
+                                if (file.isJsonObject()
+                                        && ((JsonObject) file).has("name")
+                                        && ((JsonObject) file).get("name").getAsString().endsWith(".jar")) {
+                                    String fileName = ((JsonObject) file).get("name").getAsString();
+
+                                    return new URL(new Replacer()
+                                            .replace("apiurl", url, "buildid", id, "filename", fileName)
+                                            .replace(config.getPlaceholders("project"))
+                                            .replaceIn(getUrl(ARTIFACT_DOWNLOAD_URL))
+                                    );
+                                }
+                            }
+                        }
+                    }
+
+                }
+            } catch (JsonParseException e) {
+                updater.log(Level.SEVERE, "Invalid Json returned when getting latest version for " + config.getName() + " from source " + getName() + ": " + s + ". Error: " + e.getMessage());
+            }
+        }
+        throw new FileNotFoundException("Not found");
     }
 
     @Override

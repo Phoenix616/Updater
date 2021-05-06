@@ -28,6 +28,7 @@ import dev.phoenix616.updater.PluginConfig;
 import dev.phoenix616.updater.Updater;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -88,6 +89,39 @@ public class GitLabSource extends UpdateSource {
             updater.log(Level.SEVERE, "Invalid URL for getting latest version for " + config.getName() + " from source " + getName() + "! " + e.getMessage());
         }
         return null;
+    }
+
+    @Override
+    public URL getUpdateUrl(PluginConfig config) throws MalformedURLException, FileNotFoundException {
+        Replacer replacer = new Replacer().replace("apiurl", API_URL).replace(config.getPlaceholders("repository"));
+        String s = updater.query(new URL(replacer.replaceIn(RELEASES_URL)), "Accept", "application/vnd.github.v3+json");
+        if (s != null) {
+            try {
+                JsonElement json = new JsonParser().parse(s);
+                if (json.isJsonArray() && ((JsonArray) json).size() > 0) {
+                    for (JsonElement release : ((JsonArray) json)) {
+                        if (release.isJsonObject()
+                                && ((JsonObject) release).has("tag_name")
+                                && ((JsonObject) release).has("assets")
+                                && ((JsonObject) release).get("assets").isJsonObject()) {
+                            JsonObject assets = ((JsonObject) release).getAsJsonObject("assets");
+                            if (assets.has("links") && assets.get("links").isJsonArray()) {
+                                for (JsonElement asset : assets.getAsJsonArray("links")) {
+                                    if (asset.isJsonObject()
+                                            && (((JsonObject) asset).get("name").getAsString().endsWith(".jar")
+                                            || ((JsonObject) asset).get("url").getAsString().endsWith(".jar"))) {
+                                        return new URL(((JsonObject) asset).get("url").getAsString());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (JsonParseException e) {
+                updater.log(Level.SEVERE, "Invalid Json returned when getting latest version for " + config.getName() + " from source " + getName() + ": " + s + ". Error: " + e.getMessage());
+            }
+        }
+        throw new FileNotFoundException("Not found");
     }
 
     @Override

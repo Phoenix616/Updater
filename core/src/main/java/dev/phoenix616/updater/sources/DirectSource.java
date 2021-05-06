@@ -60,12 +60,17 @@ public class DirectSource extends UpdateSource {
     }
 
     @Override
+    public URL getUpdateUrl(PluginConfig config) throws MalformedURLException {
+        return new URL(new Replacer().replace(config.getPlaceholders()).replaceIn(download));
+    }
+
+    @Override
     public File downloadUpdate(PluginConfig config) {
         String version = getLatestVersion(config);
         if (version != null) {
 
             try {
-                URL source = new URL(new Replacer().replace(config.getPlaceholders()).replaceIn(download));
+                URL source = getUpdateUrl(config);
                 File target = new File(updater.getTempFolder(), source.getPath().substring(source.getPath().lastIndexOf('/') + 1));
 
                 HttpURLConnection con = (HttpURLConnection) source.openConnection();

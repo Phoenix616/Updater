@@ -29,6 +29,7 @@ import dev.phoenix616.updater.PluginConfig;
 import dev.phoenix616.updater.Updater;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -93,6 +94,46 @@ public class GitHubSource extends UpdateSource {
             updater.log(Level.SEVERE, "Invalid URL for getting latest version for " + config.getName() + " from source " + getName() + "! " + e.getMessage());
         }
         return null;
+    }
+
+    @Override
+    public URL getUpdateUrl(PluginConfig config) throws MalformedURLException, FileNotFoundException {
+        List<String> properties = new ArrayList<>(Arrays.asList("Accept", API_HEADER));
+        if (config.getPlaceholders().containsKey("token")) {
+            Collections.addAll(properties, "Authorization", "token " + config.getPlaceholders().get("token"));
+        } else if (config.getPlaceholders().containsKey("username") && config.getPlaceholders().containsKey("password")) {
+            String userPass = config.getPlaceholders().get("username") + ":" + config.getPlaceholders().get("password");
+            Collections.addAll(properties, "Authorization", "Basic " + Base64.getEncoder().encodeToString(userPass.getBytes()));
+        }
+        String s = updater.query(new URL(new Replacer().replace(config.getPlaceholders("repository")).replaceIn(RELEASES_URL)), properties.toArray(new String[0]));
+        if (s != null) {
+            try {
+                JsonElement json = new JsonParser().parse(s);
+                if (json.isJsonArray() && ((JsonArray) json).size() > 0) {
+                    for (JsonElement release : ((JsonArray) json)) {
+                        if (release.isJsonObject()
+                                && ((JsonObject) release).has("tag_name")
+                                && ((JsonObject) release).has("assets")
+                                && ((JsonObject) release).get("assets").isJsonArray()) {
+                            for (JsonElement asset : ((JsonArray) ((JsonObject) release).get("assets"))) {
+                                if (asset.isJsonObject()
+                                        && ((JsonObject) asset).has("browser_download_url")
+                                        && ((JsonObject) asset).has("content_type")
+                                        && ((JsonObject) asset).has("name")) {
+                                    String contentType = ((JsonObject) asset).get("content_type").getAsString();
+                                    if (ContentType.JAR.matches(contentType) || ContentType.ZIP.matches(contentType)) {
+                                        return new URL(((JsonObject) asset).get("browser_download_url").getAsString());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (JsonParseException e) {
+                updater.log(Level.SEVERE, "Invalid Json returned when getting latest version for " + config.getName() + " from source " + getName() + ": " + s + ". Error: " + e.getMessage());
+            }
+        }
+        throw new FileNotFoundException("Not found");
     }
 
     @Override

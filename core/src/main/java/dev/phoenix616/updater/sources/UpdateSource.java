@@ -22,6 +22,9 @@ import dev.phoenix616.updater.PluginConfig;
 import dev.phoenix616.updater.Updater;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Collection;
 
 public abstract class UpdateSource {
@@ -47,6 +50,15 @@ public abstract class UpdateSource {
      * @return The latest version string or <code>null</code> if not found or an error occured
      */
     public abstract String getLatestVersion(PluginConfig config);
+
+    /**
+     * Get the download URL for the latest update
+     * @param config The plugin config
+     * @return The download URL for the latest update
+     * @throws MalformedURLException Thrown when the URL returned by the API is not valid
+     * @throws FileNotFoundException Thrown when no update URL could be found
+     */
+    public abstract URL getUpdateUrl(PluginConfig config) throws MalformedURLException, FileNotFoundException;
 
     /**
      * Download the latest version of a plugin into the target folder specified by the Updater.

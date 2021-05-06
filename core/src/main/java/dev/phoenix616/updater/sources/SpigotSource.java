@@ -28,6 +28,7 @@ import dev.phoenix616.updater.PluginConfig;
 import dev.phoenix616.updater.Updater;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -70,6 +71,26 @@ public class SpigotSource extends UpdateSource {
             updater.log(Level.SEVERE, "Invalid URL for getting latest version for " + config.getName() + " from source " + getName() + "! " + e.getMessage());
         }
         return null;
+    }
+
+    @Override
+    public URL getUpdateUrl(PluginConfig config) throws MalformedURLException, FileNotFoundException {
+
+        String s = updater.query(new URL(new Replacer().replace(config.getPlaceholders()).replaceIn(VERSION_URL)));
+        if (s != null) {
+            try {
+                JsonElement json = new JsonParser().parse(s);
+                if (json.isJsonObject()
+                        && ((JsonObject) json).has("name")
+                        && ((JsonObject) json).has("id")) {
+                    long id = ((JsonObject) json).get("id").getAsLong();
+                    return new URL(new Replacer().replace(config.getPlaceholders()).replace("versionid", String.valueOf(id)).replaceIn(DOWNLOAD_URL));
+                }
+            } catch (JsonParseException | IllegalStateException e) {
+                updater.log(Level.SEVERE, "Invalid Json returned when getting latest version for " + config.getName() + " from source " + getName() + ": " + s + ". Error: " + e.getMessage());
+            }
+        }
+        throw new FileNotFoundException("Not found");
     }
 
     @Override

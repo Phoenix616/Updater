@@ -23,13 +23,16 @@ import dev.phoenix616.updater.PluginConfig;
 import dev.phoenix616.updater.Updater;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.logging.Level;
 
-public class FileSource extends UpdateSource{
+public class FileSource extends UpdateSource {
 
     private final String name;
     private final String latestVersion;
@@ -66,6 +69,15 @@ public class FileSource extends UpdateSource{
             }
         }
         return null;
+    }
+
+    @Override
+    public URL getUpdateUrl(PluginConfig config) throws MalformedURLException, FileNotFoundException {
+        File file = new File(new Replacer().replace(config.getPlaceholders()).replaceIn(download));
+        if (file.exists()) {
+            return file.toURI().toURL();
+        }
+        throw new FileNotFoundException("Not found");
     }
 
     @Override
