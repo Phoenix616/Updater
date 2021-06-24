@@ -145,7 +145,7 @@ public class GitLabSource extends UpdateSource {
                                                 && (((JsonObject) asset).get("name").getAsString().endsWith(".jar")
                                                         || ((JsonObject) asset).get("url").getAsString().endsWith(".jar"))) {
                                             String version = ((JsonObject) release).get("tag_name").getAsString();
-                                            File target = new File(updater.getTempFolder(), ((JsonObject) asset).get("name").getAsString());
+                                            File target = new File(updater.getTempFolder(), config.getName() + "-" + ((JsonObject) asset).get("name").getAsString());
 
                                             try {
                                                 URL source = new URL(((JsonObject) asset).get("url").getAsString());

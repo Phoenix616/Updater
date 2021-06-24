@@ -164,7 +164,7 @@ public class GitHubSource extends UpdateSource {
                                         String contentType = ((JsonObject) asset).get("content_type").getAsString();
                                         if (ContentType.JAR.matches(contentType) || ContentType.ZIP.matches(contentType)) {
                                             String version = ((JsonObject) release).get("tag_name").getAsString();
-                                            File target = new File(updater.getTempFolder(), ((JsonObject) asset).get("name").getAsString());
+                                            File target = new File(updater.getTempFolder(), config.getName() + "-" + ((JsonObject) asset).get("name").getAsString());
 
                                             try {
                                                 URL source = new URL(((JsonObject) asset).get("browser_download_url").getAsString());

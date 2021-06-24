@@ -340,30 +340,33 @@ public abstract class Updater {
                         sender.sendMessage(Level.SEVERE, "Error while trying to get type of downloaded file!", e);
                     }
 
-
-                    if (!dontLink) {
-                        File pluginFile = new File(getTargetFolder(), plugin.getName() + ".jar");
-                        if (pluginFile.exists()) {
-                            pluginFile.delete();
-                        }
-                        File versionedFile = new File(getTargetFolder(), plugin.getFileName(latestVersion));
-                        try {
-                            Files.move(downloadedFile.toPath(), versionedFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                            Files.createSymbolicLink(pluginFile.toPath(), getTargetFolder().toPath().relativize(versionedFile.toPath()));
-                            sender.sendMessage(Level.INFO, "Linked " + pluginFile + " to " + versionedFile);
-                        } catch (IOException e) {
-                            sender.sendMessage(Level.WARNING, "Failed to create symbolic link from " + pluginFile + " to " + versionedFile + "! (" + e.getMessage() + ") Creating hard link.");
+                    File versionedFile = new File(getTargetFolder(), plugin.getFileName(latestVersion));
+                    try {
+                        Files.move(downloadedFile.toPath(), versionedFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        if (!dontLink) {
+                            File pluginFile = new File(getTargetFolder(), plugin.getName() + ".jar");
+                            if (pluginFile.exists()) {
+                                pluginFile.delete();
+                            }
                             try {
-                                Files.createLink(getTargetFolder().toPath(), versionedFile.toPath());
+                                Files.createSymbolicLink(pluginFile.toPath(), getTargetFolder().toPath().relativize(versionedFile.toPath()));
                                 sender.sendMessage(Level.INFO, "Linked " + pluginFile + " to " + versionedFile);
-                            } catch (IOException e1) {
-                                sender.sendMessage(Level.SEVERE, "Error while linking!", e1);
-                                return false;
+                                setInstalledVersion(plugin, latestVersion);
+                            } catch (IOException e) {
+                                sender.sendMessage(Level.WARNING, "Failed to create symbolic link from " + pluginFile + " to " + versionedFile + "! (" + e.getMessage() + ") Creating hard link.");
+                                try {
+                                    Files.createLink(getTargetFolder().toPath(), versionedFile.toPath());
+                                    sender.sendMessage(Level.INFO, "Linked " + pluginFile + " to " + versionedFile);
+                                } catch (IOException e1) {
+                                    sender.sendMessage(Level.SEVERE, "Error while linking!", e1);
+                                    return false;
+                                }
                             }
                         }
-                        setInstalledVersion(plugin, latestVersion);
-                        return true;
+                    } catch (IOException e) {
+                        sender.sendMessage(Level.SEVERE, "Failed to move temporary file to versioned " + downloadedFile + " to " + versionedFile + "! (" + e.getMessage() + ")");
                     }
+                    return true;
                 }
             } else {
                 try {

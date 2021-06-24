@@ -115,7 +115,7 @@ public class BukkitSource extends UpdateSource {
                 String downloadUrl = lastUpdate.get("fileUrl").getAsString();
                 String md5 = lastUpdate.get("md5").getAsString();
 
-                File target = new File(updater.getTempFolder(), lastUpdate.get("fileName").getAsString());
+                File target = new File(updater.getTempFolder(), config.getName() + "-" + lastUpdate.get("fileName").getAsString());
 
                 try {
                     URL source = new URL(downloadUrl);

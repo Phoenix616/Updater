@@ -183,7 +183,7 @@ public class TeamCitySource extends UpdateSource {
                                             && ((JsonObject) file).has("name")
                                             && ((JsonObject) file).get("name").getAsString().endsWith(".jar")) {
                                         String fileName = ((JsonObject) file).get("name").getAsString();
-                                        File target = new File(updater.getTempFolder(), fileName);
+                                        File target = new File(updater.getTempFolder(), config.getName() + "-" + fileName);
 
                                         try {
                                             URL source = new URL(new Replacer()

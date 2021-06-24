@@ -71,7 +71,7 @@ public class DirectSource extends UpdateSource {
 
             try {
                 URL source = getUpdateUrl(config);
-                File target = new File(updater.getTempFolder(), source.getPath().substring(source.getPath().lastIndexOf('/') + 1));
+                File target = new File(updater.getTempFolder(), config.getName() + "-" + source.getPath().substring(source.getPath().lastIndexOf('/') + 1));
 
                 HttpURLConnection con = (HttpURLConnection) source.openConnection();
                 con.setUseCaches(false);
