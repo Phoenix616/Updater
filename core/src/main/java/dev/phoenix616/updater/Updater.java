@@ -316,7 +316,10 @@ public abstract class Updater {
 
                             ZipFile zip = new ZipFile(downloadedFile);
 
-                            Optional<? extends ZipEntry> entry = zip.stream().filter(e -> e.getName().endsWith(".jar")).min((o1, o2) -> Long.compare(o2.getSize(), o1.getSize()));
+                            Optional<? extends ZipEntry> entry = zip.stream()
+                                    .filter(e -> e.getName().endsWith(".jar"))
+                                    .filter(e -> !e.getName().endsWith("-sources.jar") && !e.getName().endsWith("-javadoc.jar"))
+                                    .max((o1, o2) -> Long.compare(o2.getSize(), o1.getSize()));
                             if (entry.isPresent()) {
                                 downloadedFile = new File(getTempFolder(), entry.get().getName().contains("/")
                                         ? entry.get().getName().substring(entry.get().getName().lastIndexOf('/'))
