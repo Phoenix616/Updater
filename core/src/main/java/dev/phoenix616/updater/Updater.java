@@ -62,6 +62,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -316,8 +317,18 @@ public abstract class Updater {
 
                             ZipFile zip = new ZipFile(downloadedFile);
 
+                            String zipEntryPatternString = plugin.getPlaceholders().get("zip-entry-pattern");
+                            Pattern zipEntryPattern = null;
+                            if (zipEntryPatternString != null) {
+                                try {
+                                    zipEntryPattern = Pattern.compile(zipEntryPatternString);
+                                } catch (PatternSyntaxException ex) {
+                                    log(Level.SEVERE, "Could not compile regex pattern " + zipEntryPattern + " for " + plugin.getName());
+                                }
+                            }
+                            Pattern finalZipEntryPattern = zipEntryPattern;
                             Optional<? extends ZipEntry> entry = zip.stream()
-                                    .filter(e -> e.getName().endsWith(".jar"))
+                                    .filter(e -> finalZipEntryPattern != null ? finalZipEntryPattern.matcher(e.getName()).matches() : e.getName().endsWith(".jar"))
                                     .filter(e -> !e.getName().endsWith("-sources.jar") && !e.getName().endsWith("-javadoc.jar"))
                                     .max((o1, o2) -> Long.compare(o2.getSize(), o1.getSize()));
                             if (entry.isPresent()) {

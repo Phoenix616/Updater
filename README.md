@@ -57,7 +57,9 @@ The program uses multiple configuration files for specifying where the updates f
 - `direct` Queries the version and downloads the jar directly from an URL. E.g. like Jenkins allows it.  
   Required placeholders are defined in the `sources.hocon` entry
 - `direct` Queries the version and copies the jar directly from a file location. E.g. like you can do it with Jenkins if it runs on the same server.  
-  Required placeholders are defined in the `sources.hocon` entry
+  Required placeholders are defined in the `sources.hocon` entry 
+
+Downloads that return a zip file can use the `zip-entry-pattern` placeholder to define the regex pattern of the file to look for inside the zip file.
 
 ## Downloads
 Downloads are currently available on the Minebench.de CI server: https://ci.minebench.de/job/PhoenixUpdater/
