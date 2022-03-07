@@ -70,15 +70,15 @@ public abstract class Updater {
 
     public static final Pattern GITHUB_PATTERN = Pattern.compile(".*https?://(?:www\\.)?github\\.com/(?<user>[\\w\\-]+)/(?<repo>[\\w\\-]+)(?:[/#].*)?.*");
     public static final Pattern SPIGOT_PATTERN = Pattern.compile(".*https?://(?:www\\.)?spigotmc\\.org/resources/.*\\.(?<id>\\d+)(?:[/#].*)?.*");
-    private Map<String, UpdateSource> sources = new HashMap<>();
-    private Map<String, PluginConfig> plugins = new HashMap<>();
+    private final Map<String, UpdateSource> sources = new HashMap<>();
+    private final Map<String, PluginConfig> plugins = new HashMap<>();
 
     private Config versions;
 
     private final static Config PLUGIN_DEFAULTS = ConfigFactory.empty()
             .withValue("file-name-format", ConfigValueFactory.fromAnyRef("%name%.jar-%version%"));
 
-    private Cache<URL, String> queryCache = Caffeine.newBuilder().expireAfterWrite(30, TimeUnit.SECONDS).build();
+    private final Cache<URL, String> queryCache = Caffeine.newBuilder().expireAfterWrite(30, TimeUnit.SECONDS).build();
 
     private File targetFolder;
 
@@ -198,7 +198,7 @@ public abstract class Updater {
                 } else if ("p".equals(par) || "plugin".equalsIgnoreCase(par)) {
                     plugin = getPlugin(value);
                     if (plugin == null) {
-                        sender.sendMessage(Level.WARNING, "No Plugin found with name " + args[0]);
+                        sender.sendMessage(Level.WARNING, "No Plugin found with name " + value);
                         return true;
                     }
                 }
