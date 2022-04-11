@@ -218,7 +218,7 @@ public class TeamCitySource extends UpdateSource {
 
     private Replacer getReplacer(PluginConfig config) {
         Replacer replacer = new Replacer()
-                .replace("apiurl", url, "branch", "master");
+                .replace("apiurl", url, "branch", "default:any");
         // Workaround for teamcity not liking forward slashes in their query url
         for (Map.Entry<String, String> entry : config.getPlaceholders("project").entrySet()) {
             if (entry.getValue().contains("/")) {
