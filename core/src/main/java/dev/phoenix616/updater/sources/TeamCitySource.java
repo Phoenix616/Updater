@@ -38,8 +38,10 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 
 public class TeamCitySource extends UpdateSource {
@@ -78,10 +80,7 @@ public class TeamCitySource extends UpdateSource {
             if (token != null) {
                 Collections.addAll(properties, "Authorization", "Bearer " + token);
             }
-            String s = updater.query(new URL(new Replacer()
-                    .replace("apiurl", url, "branch", "master")
-                    .replace(config.getPlaceholders("project"))
-                    .replaceIn(getUrl(BUILD_URL))
+            String s = updater.query(new URL(getReplacer(config).replaceIn(getUrl(BUILD_URL))
             ), properties.toArray(new String[0]));
             if (s != null) {
                 try {
@@ -106,10 +105,7 @@ public class TeamCitySource extends UpdateSource {
         if (token != null) {
             Collections.addAll(properties, "Authorization", "Bearer " + token);
         }
-        String s = updater.query(new URL(new Replacer()
-                .replace("apiurl", url, "branch", "master")
-                .replace(config.getPlaceholders("project"))
-                .replaceIn(getUrl(BUILD_URL))
+        String s = updater.query(new URL(getReplacer(config).replaceIn(getUrl(BUILD_URL))
         ), properties.toArray(new String[0]));
         if (s != null) {
             try {
@@ -157,10 +153,7 @@ public class TeamCitySource extends UpdateSource {
             if (token != null) {
                 Collections.addAll(properties, "Authorization", "Bearer " + token);
             }
-            String s = updater.query(new URL(new Replacer()
-                    .replace("apiurl", url, "branch", "master")
-                    .replace(config.getPlaceholders("project"))
-                    .replaceIn(getUrl(BUILD_URL))
+            String s = updater.query(new URL(getReplacer(config).replaceIn(getUrl(BUILD_URL))
             ), properties.toArray(new String[0]));
             if (s != null) {
                 try {
@@ -221,6 +214,20 @@ public class TeamCitySource extends UpdateSource {
             updater.log(Level.SEVERE, "Invalid URL for getting latest version for " + config.getName() + " from source " + getName() + "! " + e.getMessage());
         }
         return null;
+    }
+
+    private Replacer getReplacer(PluginConfig config) {
+        Replacer replacer = new Replacer()
+                .replace("apiurl", url, "branch", "master");
+        // Workaround for teamcity not liking forward slashes in their query url
+        for (Map.Entry<String, String> entry : config.getPlaceholders("project").entrySet()) {
+            if (entry.getValue().contains("/")) {
+                replacer.replace(entry.getKey(), "($base64:" + Base64.getEncoder().encodeToString(entry.getValue().getBytes()) + ")");
+            } else {
+                replacer.replace(entry.getKey(), entry.getValue());
+            }
+        }
+        return replacer;
     }
 
     @Override
