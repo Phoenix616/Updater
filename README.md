@@ -6,13 +6,14 @@ Requires Java 17.
 ## Sources
 The following sources can be used for updating:
 
-- DevBukkit
+- [DevBukkit](https://dev.bukkit.org)
 - GitHub releases
 - GitLab releases (including from self-hosted instances)
-- Hangar (PaperMC plugins)
+- [Hangar](https://hangar.papermc.io) (PaperMC plugins)
+- [Modrinth](https://modrinth.com)
 - TeamCity CI builds (e.g. for WorldGuard/WorldEdit)
 - Own hosted Jenkins (via direct download source or if locally hosted file source)
-- SpigotMC (downloads will most likely fail due to DDOS protection, it tries to scan resource pages for GitHub releases too though)
+- [SpigotMC](https://spigotmc.org) (downloads will most likely fail due to DDOS protection, it tries to scan resource pages for GitHub releases too though)
 
 ## ToDo
 
@@ -54,6 +55,9 @@ The program uses multiple configuration files for specifying where the updates f
 - `hangar` Downloads Hangar.papermc.io releases.
   Required plugin placeholders: `user`
   Optional: `project` (Defaults to plugin name), `channel`, `platform`, `platform-version`
+- `modrinth` Downloads Modrinth releases.
+  Required plugin placeholders: `user`
+  Optional: `project` (Defaults to plugin name), `featured` (Defaults to true), `platform`, `platform-version`
 - `spigot` Tries to download from SpigotMC.org and falls back to GitHub if found.  
   Required plugin placeholders: `resourceid`
 

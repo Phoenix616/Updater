@@ -33,6 +33,7 @@ import dev.phoenix616.updater.sources.FileSource;
 import dev.phoenix616.updater.sources.GitHubSource;
 import dev.phoenix616.updater.sources.GitLabSource;
 import dev.phoenix616.updater.sources.HangarSource;
+import dev.phoenix616.updater.sources.ModrinthSource;
 import dev.phoenix616.updater.sources.SourceType;
 import dev.phoenix616.updater.sources.SpigotSource;
 import dev.phoenix616.updater.sources.TeamCitySource;
@@ -98,6 +99,7 @@ public abstract class Updater {
         addSource(new GitHubSource(this));
         addSource(new GitLabSource(this));
         addSource(new HangarSource(this));
+        addSource(new ModrinthSource(this));
         addSource(new SpigotSource(this));
 
         for (String sourceName : sourcesConfig.root().keySet()) {
