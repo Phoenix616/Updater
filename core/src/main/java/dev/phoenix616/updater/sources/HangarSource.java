@@ -120,7 +120,7 @@ public class HangarSource extends UpdateSource {
 
     private String getVersion(JsonObject release) {
         if (release != null) {
-            JsonElement versionElement = release.getAsJsonObject().get("name");
+            JsonElement versionElement = release.get("name");
             if (versionElement != null && versionElement.isJsonPrimitive() && versionElement.getAsJsonPrimitive().isString()) {
                 return versionElement.getAsString();
             }
