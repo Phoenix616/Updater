@@ -51,9 +51,9 @@ The program uses multiple configuration files for specifying where the updates f
 - `gitlab` Downloads GitLab releases.  
   Required plugin placeholders: `user`
   Optional: `repository` (Defaults to plugin name), `token`, `apiurl` (Defaults to `https://gitlab.com/api/v4/`)
-- `hangar` Downloads Hangar.papermc.io releases
+- `hangar` Downloads Hangar.papermc.io releases.
   Required plugin placeholders: `user`
-  Optional: `project` (Defaults to plugin name), `channel`, `platform`, `versiontag`
+  Optional: `project` (Defaults to plugin name), `channel`, `platform`, `platform-version`
 - `spigot` Tries to download from SpigotMC.org and falls back to GitHub if found.  
   Required plugin placeholders: `resourceid`
 

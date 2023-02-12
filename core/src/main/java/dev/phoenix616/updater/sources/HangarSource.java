@@ -65,8 +65,8 @@ public class HangarSource extends UpdateSource {
             if (config.getPlaceholders().containsKey("platform")) {
                 versionUrl += "&platform=%platform%";
             }
-            if (config.getPlaceholders().containsKey("versiontag")) {
-                versionUrl += "&vTag=%versiontag%";
+            if (config.getPlaceholders().containsKey("platform-version")) {
+                versionUrl += "&platformVersion=%platform-version%";
             }
             String s = updater.query(new URL(new Replacer().replace(config.getPlaceholders("project")).replaceIn(versionUrl)), properties.toArray(new String[0]));
             if (s != null) {
