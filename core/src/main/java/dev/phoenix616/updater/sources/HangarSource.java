@@ -47,9 +47,9 @@ import java.util.logging.Level;
 
 public class HangarSource extends UpdateSource {
 
-    private static final List<String> REQUIRED_PLACEHOLDERS = Arrays.asList("author");
+    private static final List<String> REQUIRED_PLACEHOLDERS = Arrays.asList("user");
     private static final String API_HEADER = "application/json";
-    private static final String VERSION_URL = "https://hangar.papermc.io/api/v1/projects/%author%/%project%/versions&limit=1&offset=0";
+    private static final String VERSION_URL = "https://hangar.papermc.io/api/v1/projects/%user%/%project%/versions&limit=1&offset=0";
 
     public HangarSource(Updater updater) {
         super(updater, REQUIRED_PLACEHOLDERS);
