@@ -1,6 +1,8 @@
 # PhoenixUpdater
 Tool for updating Minecraft plugins from multiple different sources.
 
+Requires Java 17.
+
 ## Sources
 The following sources can be used for updating:
 
