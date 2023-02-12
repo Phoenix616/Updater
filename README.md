@@ -9,6 +9,7 @@ The following sources can be used for updating:
 - DevBukkit
 - GitHub releases
 - GitLab releases (including from self-hosted instances)
+- Hangar (PaperMC plugins)
 - TeamCity CI builds (e.g. for WorldGuard/WorldEdit)
 - Own hosted Jenkins (via direct download source or if locally hosted file source)
 - SpigotMC (downloads will most likely fail due to DDOS protection, it tries to scan resource pages for GitHub releases too though)
@@ -45,11 +46,14 @@ The program uses multiple configuration files for specifying where the updates f
 - `bukkit` Downloads from dev.bukkit.org.  
   Required plugin placeholders: `pluginid` (can be obtained from [here](https://servermods.forgesvc.net/servermods/projects?search=worldedit))
 - `github` Downloads GitHub releases.  
-  Required plugin placeholders: `user`, `repository`  
-  Optional: `token` or `username` and `password`
+  Required plugin placeholders: `user`
+  Optional: `repository` (Defaults to plugin name), `token` or `username` and `password`
 - `gitlab` Downloads GitLab releases.  
-  Required plugin placeholders: `user`, `repository`  
-  Optional: `token`, `apiurl` (Defaults to `https://gitlab.com/api/v4/`)
+  Required plugin placeholders: `user`
+  Optional: `repository` (Defaults to plugin name), `token`, `apiurl` (Defaults to `https://gitlab.com/api/v4/`)
+- `hangar` Downloads Hangar.papermc.io releases
+  Required plugin placeholders: `author`
+  Optional: `project` (Defaults to plugin name), `channel`, `platform`, `versiontag`
 - `spigot` Tries to download from SpigotMC.org and falls back to GitHub if found.  
   Required plugin placeholders: `resourceid`
 

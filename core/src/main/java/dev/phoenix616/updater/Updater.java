@@ -32,6 +32,7 @@ import dev.phoenix616.updater.sources.DirectSource;
 import dev.phoenix616.updater.sources.FileSource;
 import dev.phoenix616.updater.sources.GitHubSource;
 import dev.phoenix616.updater.sources.GitLabSource;
+import dev.phoenix616.updater.sources.HangarSource;
 import dev.phoenix616.updater.sources.SourceType;
 import dev.phoenix616.updater.sources.SpigotSource;
 import dev.phoenix616.updater.sources.TeamCitySource;
@@ -69,6 +70,7 @@ import java.util.zip.ZipFile;
 public abstract class Updater {
 
     public static final Pattern GITHUB_PATTERN = Pattern.compile(".*https?://(?:www\\.)?github\\.com/(?<user>[\\w\\-]+)/(?<repo>[\\w\\-]+)(?:[/#].*)?.*");
+    public static final Pattern HANGAR_PATTERN = Pattern.compile(".*https?://hangar\\.papermc\\.io/(?<author>[\\w\\-]+)/(?<project>[\\w\\-]+)(?:[/#].*)?.*");
     public static final Pattern SPIGOT_PATTERN = Pattern.compile(".*https?://(?:www\\.)?spigotmc\\.org/resources/.*\\.(?<id>\\d+)(?:[/#].*)?.*");
     private final Map<String, UpdateSource> sources = new HashMap<>();
     private final Map<String, PluginConfig> plugins = new HashMap<>();
@@ -95,6 +97,7 @@ public abstract class Updater {
         addSource(new BukkitSource(this));
         addSource(new GitHubSource(this));
         addSource(new GitLabSource(this));
+        addSource(new HangarSource(this));
         addSource(new SpigotSource(this));
 
         for (String sourceName : sourcesConfig.root().keySet()) {
@@ -257,6 +260,19 @@ public abstract class Updater {
                     try (BufferedReader in = new BufferedReader(new InputStreamReader(jar.getInputStream(pluginDescription)))) {
                         String line;
                         while ((line = in.readLine()) != null) {
+                            Matcher hangarMatcher = HANGAR_PATTERN.matcher(line);
+                            if (hangarMatcher.matches()) {
+                                String hangarAuthor = hangarMatcher.group("author");
+                                String hangarProject = hangarMatcher.group("project");
+                                sender.sendMessage(Level.INFO, "Found link to a Hanger project page in " + file.getName() + "! If you want to update from there add the following to your plugins config:\n\n"
+                                        + pluginName + " {\n"
+                                        + "  type = hangar\n"
+                                        + "  placeholders {\n"
+                                        + "    author = " + hangarAuthor + "\n"
+                                        + "    project = " + hangarProject + "\n"
+                                        + "  }\n"
+                                        + "}\n");
+                            }
                             Matcher spigotMatcher = SPIGOT_PATTERN.matcher(line);
                             if (spigotMatcher.matches()) {
                                 String id = spigotMatcher.group("id");
