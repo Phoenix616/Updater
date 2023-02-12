@@ -23,7 +23,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
-import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 import de.themoep.minedown.adventure.Replacer;
 import dev.phoenix616.updater.PluginConfig;
 import dev.phoenix616.updater.Updater;
@@ -32,6 +31,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -130,10 +130,11 @@ public class BukkitSource extends UpdateSource {
                     try (InputStream in = con.getInputStream()) {
                         if (Files.copy(in, target.toPath(), StandardCopyOption.REPLACE_EXISTING) > 0) {
                             byte[] hash = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(target.toPath()));
-                            if (md5.equalsIgnoreCase(HexBin.encode(hash))) {
+                            String stringHash = String.format("%x", new BigInteger(1, hash));
+                            if (md5.equalsIgnoreCase(stringHash)) {
                                 return target;
                             } else {
-                                updater.log(Level.SEVERE, "Check sum of file (" + HexBin.encode(hash) + ") does not match provided one (" + md5 + ")");
+                                updater.log(Level.SEVERE, "Check sum of file (" + stringHash + ") does not match provided one (" + md5 + ")");
                             }
                         }
                     }
