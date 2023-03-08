@@ -50,13 +50,11 @@ public class TeamCitySource extends UpdateSource {
     private final static String BUILD_URL = "%apiurl%/app/rest/builds/project:%project%,status:SUCCESS,branch:%branch%,buildType:%buildtype%";
     private final static String ARTIFACTS_URL = "%apiurl%/app/rest/builds/id:%buildid%/artifacts";
     private final static String ARTIFACT_DOWNLOAD_URL = "%apiurl%/app/rest/builds/id:%buildid%/artifacts/content/%filename%";
-    private final String name;
     private final String url;
     private final String token;
 
     public TeamCitySource(String name, Updater updater, String url, String token) {
-        super(updater, REQUIRED_PLACEHOLDERS);
-        this.name = name;
+        super(updater, SourceType.TEAMCITY, name, REQUIRED_PLACEHOLDERS);
         this.url = url;
         this.token = token;
     }
@@ -228,15 +226,5 @@ public class TeamCitySource extends UpdateSource {
             }
         }
         return replacer;
-    }
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public SourceType getType() {
-        return SourceType.TEAMCITY;
     }
 }

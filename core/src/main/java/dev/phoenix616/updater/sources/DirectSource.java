@@ -35,13 +35,11 @@ import java.util.logging.Level;
 
 public class DirectSource extends UpdateSource {
 
-    private final String name;
     private final String latestVersion;
     private final String download;
 
     public DirectSource(String name, Updater updater, String latestVersion, String download, List<String> requiredPlaceholders) {
-        super(updater, requiredPlaceholders);
-        this.name = name;
+        super(updater, SourceType.DIRECT, name, requiredPlaceholders);
         this.latestVersion = latestVersion;
         this.download = download;
     }
@@ -88,15 +86,5 @@ public class DirectSource extends UpdateSource {
         }
 
         return null;
-    }
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public SourceType getType() {
-        return SourceType.DIRECT;
     }
 }

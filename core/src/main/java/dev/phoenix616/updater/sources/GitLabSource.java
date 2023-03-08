@@ -47,7 +47,7 @@ public class GitLabSource extends UpdateSource {
     private static final String RELEASES_URL = "%apiurl%projects/%user%%2F%repository%/releases";
 
     public GitLabSource(Updater updater) {
-        super(updater, REQUIRED_PLACEHOLDERS);
+        super(updater, SourceType.GITLAB, REQUIRED_PLACEHOLDERS);
     }
 
     @Override
@@ -180,15 +180,5 @@ public class GitLabSource extends UpdateSource {
             updater.log(Level.SEVERE, "Invalid URL for getting latest version for " + config.getName() + " from source " + getName() + "! " + e.getMessage());
         }
         return null;
-    }
-
-    @Override
-    public String getName() {
-        return getType().name();
-    }
-
-    @Override
-    public SourceType getType() {
-        return SourceType.GITLAB;
     }
 }

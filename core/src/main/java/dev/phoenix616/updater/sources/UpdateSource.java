@@ -29,10 +29,18 @@ import java.util.Collection;
 
 public abstract class UpdateSource {
     protected final Updater updater;
+    private final SourceType sourceType;
+    private final String name;
     private final Collection<String> requiredPlaceholders;
 
-    public UpdateSource(Updater updater, Collection<String> requiredPlaceholders) {
+    public UpdateSource(Updater updater, SourceType sourceType, Collection<String> requiredPlaceholders) {
+        this(updater, sourceType, sourceType.name(), requiredPlaceholders);
+    }
+
+    public UpdateSource(Updater updater, SourceType sourceType, String name, Collection<String> requiredPlaceholders) {
         this.updater = updater;
+        this.sourceType = sourceType;
+        this.name = name;
         this.requiredPlaceholders = requiredPlaceholders;
     }
 
@@ -71,11 +79,15 @@ public abstract class UpdateSource {
      * Get the name of the source
      * @return The name of the source
      */
-    public abstract String getName();
+    public String getName() {
+        return name;
+    }
 
     /**
      * Get the type of this source
      * @return The type
      */
-    public abstract SourceType getType();
+    public SourceType getType() {
+        return sourceType;
+    }
 }

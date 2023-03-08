@@ -49,7 +49,7 @@ public class BukkitSource extends UpdateSource {
     private static final String VERSION_URL = "https://api.curseforge.com/servermods/files?projectIds=%pluginid%";
 
     public BukkitSource(Updater updater) {
-        super(updater, REQUIRED_PLACEHOLDERS);
+        super(updater, SourceType.BUKKIT, REQUIRED_PLACEHOLDERS);
     }
 
     @Override
@@ -148,15 +148,5 @@ public class BukkitSource extends UpdateSource {
             updater.log(Level.SEVERE, "Invalid URL for getting latest version for " + config.getName() + " from source " + getName() + "! " + e.getMessage());
         }
         return null;
-    }
-
-    @Override
-    public String getName() {
-        return getType().name();
-    }
-
-    @Override
-    public SourceType getType() {
-        return SourceType.BUKKIT;
     }
 }

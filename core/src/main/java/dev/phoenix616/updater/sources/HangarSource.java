@@ -52,7 +52,7 @@ public class HangarSource extends UpdateSource {
     private static final String VERSION_URL = "https://hangar.papermc.io/api/v1/projects/%user%/%project%/versions&limit=1&offset=0";
 
     public HangarSource(Updater updater) {
-        super(updater, REQUIRED_PLACEHOLDERS);
+        super(updater, SourceType.HANGAR, REQUIRED_PLACEHOLDERS);
     }
 
     private JsonObject getLatestRelease(PluginConfig config) {
@@ -210,15 +210,5 @@ public class HangarSource extends UpdateSource {
             }
         }
         return null;
-    }
-
-    @Override
-    public String getName() {
-        return getType().name();
-    }
-
-    @Override
-    public SourceType getType() {
-        return SourceType.GITHUB;
     }
 }

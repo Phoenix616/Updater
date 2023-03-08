@@ -51,7 +51,7 @@ public class GitHubSource extends UpdateSource {
     private static final String RELEASES_URL = "https://api.github.com/repos/%user%/%repository%/releases";
 
     public GitHubSource(Updater updater) {
-        super(updater, REQUIRED_PLACEHOLDERS);
+        super(updater, SourceType.GITHUB, REQUIRED_PLACEHOLDERS);
     }
 
     @Override
@@ -206,15 +206,5 @@ public class GitHubSource extends UpdateSource {
             updater.log(Level.SEVERE, "Invalid URL for getting latest version for " + config.getName() + " from source " + getName() + "! " + e.getMessage());
         }
         return null;
-    }
-
-    @Override
-    public String getName() {
-        return getType().name();
-    }
-
-    @Override
-    public SourceType getType() {
-        return SourceType.GITHUB;
     }
 }

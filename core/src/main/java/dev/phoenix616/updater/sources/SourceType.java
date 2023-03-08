@@ -25,5 +25,7 @@ public enum SourceType {
     GITLAB,
     SPIGOT,
     BUKKIT,
-    TEAMCITY;
+    TEAMCITY,
+    HANGAR,
+    MODRINTH;
 }

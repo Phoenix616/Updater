@@ -52,7 +52,7 @@ public class ModrinthSource extends UpdateSource {
     private static final String VERSION_URL = "https://api.modrinth.com/v2/project/%project%/versions&featured=%featured%";
 
     public ModrinthSource(Updater updater) {
-        super(updater, REQUIRED_PLACEHOLDERS);
+        super(updater, SourceType.MODRINTH, REQUIRED_PLACEHOLDERS);
     }
 
     private Optional<ReleaseInfo> getLatestRelease(PluginConfig config) {
@@ -170,16 +170,6 @@ public class ModrinthSource extends UpdateSource {
             updater.log(Level.SEVERE, "Unable to get download for " + config.getName() + " from source " + getName() + "!");
         }
         return null;
-    }
-
-    @Override
-    public String getName() {
-        return getType().name();
-    }
-
-    @Override
-    public SourceType getType() {
-        return SourceType.GITHUB;
     }
 
     private record ReleaseInfo(String version, URL url, String sha1hash) {}

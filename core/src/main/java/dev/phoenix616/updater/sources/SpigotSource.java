@@ -50,7 +50,7 @@ public class SpigotSource extends UpdateSource {
     private static final String DETAILS_URL = "https://api.spiget.org/v2/resources/%resourceid%";
 
     public SpigotSource(Updater updater) {
-        super(updater, REQUIRED_PLACEHOLDERS);
+        super(updater, SourceType.SPIGOT, REQUIRED_PLACEHOLDERS);
     }
 
     @Override
@@ -169,15 +169,5 @@ public class SpigotSource extends UpdateSource {
             updater.log(Level.SEVERE, "Invalid URL for getting latest version for " + config.getName() + " from source " + getName() + "! " + e.getMessage());
         }
         return null;
-    }
-
-    @Override
-    public String getName() {
-        return getType().name();
-    }
-
-    @Override
-    public SourceType getType() {
-        return SourceType.SPIGOT;
     }
 }
