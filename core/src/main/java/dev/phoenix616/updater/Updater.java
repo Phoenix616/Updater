@@ -496,7 +496,9 @@ public abstract class Updater {
     }
 
     private void addSource(UpdateSource source) {
-        sources.put(source.getName().toUpperCase(Locale.ROOT), source);
+        if (sources.putIfAbsent(source.getName().toUpperCase(Locale.ROOT), source) != null) {
+            throw new IllegalStateException("There is already a source with the name " + source.getName() + " registered!");
+        }
         log(Level.FINE, "Added " + source.getType() + " source " + source.getName());
     }
 
