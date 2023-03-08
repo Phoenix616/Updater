@@ -86,9 +86,12 @@ public class GitHubSource extends UpdateSource {
                             }
                         }
                     }
+                    updater.log(Level.WARNING, "Json did not contain release entry for " + config.getName() + " from source " + getName() + ": " + json);
                 } catch (JsonParseException e) {
                     updater.log(Level.SEVERE, "Invalid Json returned when getting latest version for " + config.getName() + " from source " + getName() + ": " + s + ". Error: " + e.getMessage());
                 }
+            } else {
+                updater.log(Level.WARNING, "Query didn't return anything for " + config.getName() + " from source " + getName() + "!");
             }
         } catch (MalformedURLException e) {
             updater.log(Level.SEVERE, "Invalid URL for getting latest version for " + config.getName() + " from source " + getName() + "! " + e.getMessage());

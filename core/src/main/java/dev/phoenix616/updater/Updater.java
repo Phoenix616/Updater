@@ -623,6 +623,8 @@ public abstract class Updater {
                         }
                     }
                     return msg.toString();
+                } else {
+                    log(Level.WARNING, con.getResponseCode() + "/" + con.getResponseMessage() + " while trying to query url " + url.toString());
                 }
             } catch (IOException e) {
                 log(Level.SEVERE, "Error while trying to query url " + url.toString() + ".", e);
