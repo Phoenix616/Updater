@@ -95,7 +95,7 @@ public class Main {
         Sender sender = new Sender() {
             @Override
             public void sendMessage(Level level, String message, Throwable... throwables) {
-                if (level.intValue() >= level.intValue()) {
+                if (level.intValue() >= getLogLevel().intValue()) {
                     updater.log(level, message, throwables);
                 }
             }
