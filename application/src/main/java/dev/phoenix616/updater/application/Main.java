@@ -70,9 +70,11 @@ public class Main {
 
             @Override
             public void log(Level level, String message, Throwable... exception) {
-                System.out.println("[" + level + "] " + message);
-                for (Throwable throwable : exception) {
-                    throwable.printStackTrace();
+                if (level.intValue() >= getLogLevel().intValue()) {
+                    System.out.println("[" + level + "] " + message);
+                    for (Throwable throwable : exception) {
+                        throwable.printStackTrace();
+                    }
                 }
             }
 
@@ -92,16 +94,7 @@ public class Main {
             }
         };
 
-        Sender sender = new Sender() {
-            @Override
-            public void sendMessage(Level level, String message, Throwable... throwables) {
-                if (level.intValue() >= getLogLevel().intValue()) {
-                    updater.log(level, message, throwables);
-                }
-            }
-        };
-
-        if (!updater.run(sender, args)){
+        if (!updater.run( args)){
             System.out.print("Usage: " + p.getProperty("application.name") + ".jar <options>\n"
                     + " -t <path>, --target-folder <path> Target folder where updates get downloaded to (Required)\n"
                     + " -p <name>, --plugin <name>        Only check/update one plugin (Optional)\n"

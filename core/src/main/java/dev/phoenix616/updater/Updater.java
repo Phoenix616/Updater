@@ -84,6 +84,7 @@ public abstract class Updater {
     private final Cache<URL, String> queryCache = Caffeine.newBuilder().expireAfterWrite(30, TimeUnit.SECONDS).build();
 
     private File targetFolder;
+    private Level logLevel = Level.INFO;
 
     public Updater(File targetFolder) {
         this.targetFolder = targetFolder;
@@ -161,16 +162,13 @@ public abstract class Updater {
 
     /**
      * Run the updater
-     * @param sender The sender executing the command
      * @param args The arguments passed to the command
      * @return true if the argument syntax was correct, false if not
      */
-    public boolean run(Sender sender, String[] args) {
+    public boolean run(String[] args) {
         String pluginName = null;
         boolean checkOnly = false;
         boolean dontLink = getDontLink();
-
-        Level logLevel = Level.INFO;
 
         String par = "";
         for (int i = 0; i < args.length; i++) {
@@ -180,7 +178,7 @@ public abstract class Updater {
             } else if (args[i].startsWith("--")) {
                 start = 2;
             } else if (par.isEmpty()){
-                sender.sendMessage(Level.WARNING, "Wrong parameter " + args[i] + "!");
+                log(Level.WARNING, "Wrong parameter " + args[i] + "!");
                 return false;
             }
 
@@ -213,13 +211,11 @@ public abstract class Updater {
                     try {
                         logLevel = Level.parse(value);
                     } catch (IllegalArgumentException e) {
-                        sender.sendMessage(Level.WARNING, "Invalid parameter '" + par + "'! " + e.getMessage());
+                        log(Level.WARNING, "Invalid parameter '" + par + "'! " + e.getMessage());
                         return true;
                     }
                 }
             }
-
-            sender.setLogLevel(logLevel);
 
             if ("c".equals(par) || "check-only".equalsIgnoreCase(par)) {
                 checkOnly = true;
@@ -234,16 +230,16 @@ public abstract class Updater {
         if (pluginName != null) {
             plugin = getPlugin(pluginName);
             if (plugin == null) {
-                sender.sendMessage(Level.WARNING, "No Plugin found with name " + pluginName);
+                log(Level.WARNING, "No Plugin found with name " + pluginName);
                 return true;
             }
         }
 
         if (targetFolder == null) {
-            sender.sendMessage(Level.WARNING, "Target folder not specified!");
+            log(Level.WARNING, "Target folder not specified!");
             return false;
         } else if (!targetFolder.exists()) {
-            sender.sendMessage(Level.WARNING, "Target folder does not exist! " + targetFolder);
+            log(Level.WARNING, "Target folder does not exist! " + targetFolder);
             return true;
         }
 
@@ -251,10 +247,10 @@ public abstract class Updater {
 
         boolean r;
         if (plugin != null) {
-            r = check(sender, plugin, !checkOnly, dontLink);
+            r = check(plugin, !checkOnly, dontLink);
         } else {
-            checkExistingJars(sender);
-            r = check(sender, !checkOnly, dontLink);
+            checkExistingJars();
+            r = check(!checkOnly, dontLink);
         }
 
         // Check if plugin was updated, if so save versions config
@@ -262,14 +258,14 @@ public abstract class Updater {
             try {
                 saveInstalledVersions();
             } catch (IOException e) {
-                sender.sendMessage(Level.SEVERE, "Failed to save versions file!", e);
+                log(Level.SEVERE, "Failed to save versions file!", e);
             }
         }
 
         return true;
     }
 
-    private void checkExistingJars(Sender sender) {
+    private void checkExistingJars() {
         for (File file : Objects.requireNonNull(getTargetFolder().listFiles((dir, name) -> name.toLowerCase(Locale.ROOT).endsWith(".jar")))) {
             String pluginName = file.getName().substring(0, file.getName().length() - 4);
             if (getPlugin(pluginName) != null) {
@@ -289,7 +285,7 @@ public abstract class Updater {
                             if (hangarMatcher.matches()) {
                                 String hangarAuthor = hangarMatcher.group("author");
                                 String hangarProject = hangarMatcher.group("project");
-                                sender.sendMessage(Level.INFO, "Found link to a Hanger project page in " + file.getName() + "! If you want to update from there add the following to your plugins config:\n\n"
+                                log(Level.INFO, "Found link to a Hanger project page in " + file.getName() + "! If you want to update from there add the following to your plugins config:\n\n"
                                         + pluginName + " {\n"
                                         + "  type = hangar\n"
                                         + "  placeholders {\n"
@@ -301,7 +297,7 @@ public abstract class Updater {
                             Matcher spigotMatcher = SPIGOT_PATTERN.matcher(line);
                             if (spigotMatcher.matches()) {
                                 String id = spigotMatcher.group("id");
-                                sender.sendMessage(Level.INFO, "Found link to SpigotMC resource page in " + file.getName() + "! If you want to update from there add the following to your plugins config:\n\n"
+                                log(Level.INFO, "Found link to SpigotMC resource page in " + file.getName() + "! If you want to update from there add the following to your plugins config:\n\n"
                                         + pluginName + " {\n"
                                         + "  type = spigot\n"
                                         + "  placeholders {\n"
@@ -313,7 +309,7 @@ public abstract class Updater {
                             if (ghMatcher.matches()) {
                                 String ghUser = ghMatcher.group("user");
                                 String ghRepository = ghMatcher.group("repo");
-                                sender.sendMessage(Level.INFO, "Found link to GitHub repository in " + file.getName() + "! If you want to update from there add the following to your plugins config:\n\n"
+                                log(Level.INFO, "Found link to GitHub repository in " + file.getName() + "! If you want to update from there add the following to your plugins config:\n\n"
                                         + pluginName + " {\n"
                                         + "  type = github\n"
                                         + "  placeholders {\n"
@@ -326,35 +322,35 @@ public abstract class Updater {
                     }
                 }
             } catch (IOException e) {
-                sender.sendMessage(Level.SEVERE, "Error while trying to check content of " + file.getName() + "!", e);
+                log(Level.SEVERE, "Error while trying to check content of " + file.getName() + "!", e);
             }
         }
     }
 
-    private boolean check(Sender sender, boolean update, boolean dontLink) {
+    private boolean check(boolean update, boolean dontLink) {
         boolean r = false;
         for (PluginConfig plugin : plugins.values()) {
-            r |= check(sender, plugin, update, dontLink);
+            r |= check(plugin, update, dontLink);
         }
         return r;
     }
 
-    private boolean check(Sender sender, PluginConfig plugin, boolean update, boolean dontLink) {
+    private boolean check(PluginConfig plugin, boolean update, boolean dontLink) {
         String latestVersion = plugin.getSource().getLatestVersion(plugin);
         if (latestVersion != null && isNewVersion(plugin, latestVersion)) {
-            sender.sendMessage(Level.INFO, "Found new version of " + plugin.getName() + " on " + plugin.getSource().getName() + ": " + latestVersion);
+            log(Level.INFO, "Found new version of " + plugin.getName() + " on " + plugin.getSource().getName() + ": " + latestVersion);
 
             if (update) {
-                sender.sendMessage(Level.INFO, "Downloading " + plugin.getName() + " " + latestVersion + "...");
+                log(Level.INFO, "Downloading " + plugin.getName() + " " + latestVersion + "...");
                 File downloadedFile = plugin.getSource().downloadUpdate(plugin);
                 if (downloadedFile != null) {
-                    sender.sendMessage(Level.INFO, "Done!");
+                    log(Level.INFO, "Done!");
                     try {
                         String contentType = Files.probeContentType(downloadedFile.toPath());
                         if (ContentType.JAR.matches(contentType)) {
-                            sender.sendMessage(Level.INFO, "Successfully downloaded plugin jar file!");
+                            log(Level.INFO, "Successfully downloaded plugin jar file!");
                         } else if (ContentType.ZIP.matches(contentType)) {
-                            sender.sendMessage(Level.INFO, "Downloaded a zip archive. Trying to unpack it...");
+                            log(Level.INFO, "Downloaded a zip archive. Trying to unpack it...");
 
                             ZipFile zip = new ZipFile(downloadedFile);
 
@@ -379,20 +375,20 @@ public abstract class Updater {
                                 try {
                                     Files.copy(zip.getInputStream(entry.get()), downloadedFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                                 } catch (IOException e) {
-                                    sender.sendMessage(Level.SEVERE, "Error while trying to unpack file " + entry.get().getName() + " from " + zip.getName() + ". Aborting!", e);
+                                    log(Level.SEVERE, "Error while trying to unpack file " + entry.get().getName() + " from " + zip.getName() + ". Aborting!", e);
                                     return false;
                                 }
                             } else {
-                                sender.sendMessage(Level.SEVERE, "Unable to find jar file in zip archive. Aborting!");
+                                log(Level.SEVERE, "Unable to find jar file in zip archive. Aborting!");
                                 return false;
                             }
                         } else if (contentType != null) {
-                            sender.sendMessage(Level.INFO, "Downloaded a " + contentType + " file which isn't supported. Trying to link it anyways...");
+                            log(Level.INFO, "Downloaded a " + contentType + " file which isn't supported. Trying to link it anyways...");
                         } else {
-                            sender.sendMessage(Level.INFO, "Unable to detect file content type... hoping for the best :S");
+                            log(Level.INFO, "Unable to detect file content type... hoping for the best :S");
                         }
                     } catch (IOException e) {
-                        sender.sendMessage(Level.SEVERE, "Error while trying to get type of downloaded file!", e);
+                        log(Level.SEVERE, "Error while trying to get type of downloaded file!", e);
                     }
 
                     File versionedFile = new File(getTargetFolder(), plugin.getFileName(latestVersion));
@@ -405,34 +401,34 @@ public abstract class Updater {
                             }
                             try {
                                 Files.createSymbolicLink(pluginFile.toPath(), getTargetFolder().toPath().relativize(versionedFile.toPath()));
-                                sender.sendMessage(Level.INFO, "Linked " + pluginFile + " to " + versionedFile);
+                                log(Level.INFO, "Linked " + pluginFile + " to " + versionedFile);
                                 setInstalledVersion(plugin, latestVersion);
                             } catch (IOException e) {
-                                sender.sendMessage(Level.WARNING, "Failed to create symbolic link from " + pluginFile + " to " + versionedFile + "! (" + e.getMessage() + ") Creating hard link.");
+                                log(Level.WARNING, "Failed to create symbolic link from " + pluginFile + " to " + versionedFile + "! (" + e.getMessage() + ") Creating hard link.");
                                 try {
                                     Files.createLink(getTargetFolder().toPath(), versionedFile.toPath());
-                                    sender.sendMessage(Level.INFO, "Linked " + pluginFile + " to " + versionedFile);
+                                    log(Level.INFO, "Linked " + pluginFile + " to " + versionedFile);
                                 } catch (IOException e1) {
-                                    sender.sendMessage(Level.SEVERE, "Error while linking!", e1);
+                                    log(Level.SEVERE, "Error while linking!", e1);
                                     return false;
                                 }
                             }
                         }
                     } catch (IOException e) {
-                        sender.sendMessage(Level.SEVERE, "Failed to move temporary file to versioned " + downloadedFile + " to " + versionedFile + "! (" + e.getMessage() + ")");
+                        log(Level.SEVERE, "Failed to move temporary file to versioned " + downloadedFile + " to " + versionedFile + "! (" + e.getMessage() + ")");
                     }
                     return true;
                 }
             } else {
                 try {
-                    sender.sendMessage(Level.FINE, "Get update from " + plugin.getSource().getUpdateUrl(plugin));
+                    log(Level.FINE, "Get update from " + plugin.getSource().getUpdateUrl(plugin));
                 } catch (MalformedURLException | FileNotFoundException e) {
-                    sender.sendMessage(Level.SEVERE, "Error while trying to get download URL: " + e.getMessage());
+                    log(Level.SEVERE, "Error while trying to get download URL: " + e.getMessage());
                 }
                 return true;
             }
         } else {
-            sender.sendMessage(Level.FINE, "No new version for " + plugin.getName() + " found from " + plugin.getSource().getType() + " source " + plugin.getSource().getName() + " (got " + latestVersion + ")");
+            log(Level.FINE, "No new version for " + plugin.getName() + " found from " + plugin.getSource().getType() + " source " + plugin.getSource().getName() + " (got " + latestVersion + ")");
         }
         return false;
     }
@@ -614,6 +610,10 @@ public abstract class Updater {
 
     private File getTargetFolder() {
         return targetFolder;
+    }
+
+    protected Level getLogLevel() {
+        return logLevel;
     }
 
     public abstract void log(Level level, String message, Throwable... exception);
