@@ -230,10 +230,13 @@ public abstract class Updater {
 
         loadConfig();
 
-        PluginConfig plugin = getPlugin(pluginName);
-        if (plugin == null) {
-            sender.sendMessage(Level.WARNING, "No Plugin found with name " + pluginName);
-            return true;
+        PluginConfig plugin = null;
+        if (pluginName != null) {
+            plugin = getPlugin(pluginName);
+            if (plugin == null) {
+                sender.sendMessage(Level.WARNING, "No Plugin found with name " + pluginName);
+                return true;
+            }
         }
 
         if (targetFolder == null) {
