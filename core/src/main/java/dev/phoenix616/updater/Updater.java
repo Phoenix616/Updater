@@ -287,7 +287,7 @@ public abstract class Updater {
                                 String hangarProject = hangarMatcher.group("project");
                                 log(Level.INFO, "Found link to a Hanger project page in " + file.getName() + "! If you want to update from there add the following to your plugins config:\n\n"
                                         + pluginName + " {\n"
-                                        + "  type = hangar\n"
+                                        + "  source = hangar\n"
                                         + "  placeholders {\n"
                                         + "    author = " + hangarAuthor + "\n"
                                         + "    project = " + hangarProject + "\n"
@@ -299,7 +299,7 @@ public abstract class Updater {
                                 String id = spigotMatcher.group("id");
                                 log(Level.INFO, "Found link to SpigotMC resource page in " + file.getName() + "! If you want to update from there add the following to your plugins config:\n\n"
                                         + pluginName + " {\n"
-                                        + "  type = spigot\n"
+                                        + "  source = spigot\n"
                                         + "  placeholders {\n"
                                         + "    resourceid = " + id + "\n"
                                         + "  }\n"
@@ -311,7 +311,7 @@ public abstract class Updater {
                                 String ghRepository = ghMatcher.group("repo");
                                 log(Level.INFO, "Found link to GitHub repository in " + file.getName() + "! If you want to update from there add the following to your plugins config:\n\n"
                                         + pluginName + " {\n"
-                                        + "  type = github\n"
+                                        + "  source = github\n"
                                         + "  placeholders {\n"
                                         + "    user = " + ghUser + "\n"
                                         + "    repository = " + ghRepository + "\n"
