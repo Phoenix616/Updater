@@ -87,7 +87,6 @@ public abstract class Updater {
 
     public Updater(File targetFolder) {
         this.targetFolder = targetFolder;
-        loadConfig();
     }
 
     private void loadConfig() {
@@ -160,8 +159,14 @@ public abstract class Updater {
         }
     }
 
+    /**
+     * Run the updater
+     * @param sender The sender executing the command
+     * @param args The arguments passed to the command
+     * @return true if the argument syntax was correct, false if not
+     */
     public boolean run(Sender sender, String[] args) {
-        PluginConfig plugin = null;
+        String pluginName = null;
         boolean checkOnly = false;
         boolean dontLink = getDontLink();
 
@@ -203,19 +208,13 @@ public abstract class Updater {
                 if (targetFolder == null && ("t".equals(par) || "target-folder".equalsIgnoreCase(par))) {
                     targetFolder = new File(value);
                 } else if ("p".equals(par) || "plugin".equalsIgnoreCase(par)) {
-                    plugin = getPlugin(value);
-                    if (plugin == null) {
-                        sender.sendMessage(Level.WARNING, "No Plugin found with name " + value);
-                        return true;
-                    }
+                    pluginName = value;
                 } else if ("l".equals(par) || "log-level".equalsIgnoreCase(par)) {
                     try {
                         logLevel = Level.parse(value);
                     } catch (IllegalArgumentException e) {
-                        if (plugin == null) {
-                            sender.sendMessage(Level.WARNING, "Invalid parameter '" + par + "'! " + e.getMessage());
-                            return true;
-                        }
+                        sender.sendMessage(Level.WARNING, "Invalid parameter '" + par + "'! " + e.getMessage());
+                        return true;
                     }
                 }
             }
@@ -227,6 +226,14 @@ public abstract class Updater {
             } else if ("d".equals(par) || "dont-link".equalsIgnoreCase(par)) {
                 dontLink = true;
             }
+        }
+
+        loadConfig();
+
+        PluginConfig plugin = getPlugin(pluginName);
+        if (plugin == null) {
+            sender.sendMessage(Level.WARNING, "No Plugin found with name " + pluginName);
+            return true;
         }
 
         if (targetFolder == null) {
