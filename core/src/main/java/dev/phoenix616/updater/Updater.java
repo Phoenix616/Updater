@@ -165,6 +165,8 @@ public abstract class Updater {
         boolean checkOnly = false;
         boolean dontLink = getDontLink();
 
+        Level logLevel = Level.INFO;
+
         String par = "";
         for (int i = 0; i < args.length; i++) {
             int start = 0;
@@ -206,8 +208,19 @@ public abstract class Updater {
                         sender.sendMessage(Level.WARNING, "No Plugin found with name " + value);
                         return true;
                     }
+                } else if ("l".equals(par) || "log-level".equalsIgnoreCase(par)) {
+                    try {
+                        logLevel = Level.parse(value);
+                    } catch (IllegalArgumentException e) {
+                        if (plugin == null) {
+                            sender.sendMessage(Level.WARNING, "Invalid parameter '" + par + "'! " + e.getMessage());
+                            return true;
+                        }
+                    }
                 }
             }
+
+            sender.setLogLevel(logLevel);
 
             if ("c".equals(par) || "check-only".equalsIgnoreCase(par)) {
                 checkOnly = true;
@@ -402,14 +415,14 @@ public abstract class Updater {
                 }
             } else {
                 try {
-                    sender.sendMessage(Level.INFO, "Get update from " + plugin.getSource().getUpdateUrl(plugin));
+                    sender.sendMessage(Level.FINE, "Get update from " + plugin.getSource().getUpdateUrl(plugin));
                 } catch (MalformedURLException | FileNotFoundException e) {
                     sender.sendMessage(Level.SEVERE, "Error while trying to get download URL: " + e.getMessage());
                 }
                 return true;
             }
         } else {
-            sender.sendMessage(Level.INFO, "No new version for " + plugin.getName() + " found from " + plugin.getSource().getType() + " source " + plugin.getSource().getName() + " (got " + latestVersion + ")");
+            sender.sendMessage(Level.FINE, "No new version for " + plugin.getName() + " found from " + plugin.getSource().getType() + " source " + plugin.getSource().getName() + " (got " + latestVersion + ")");
         }
         return false;
     }

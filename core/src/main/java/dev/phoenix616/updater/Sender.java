@@ -21,6 +21,15 @@ package dev.phoenix616.updater;
 import java.util.logging.Level;
 
 public abstract class Sender {
+    private Level logLevel;
 
     public abstract void sendMessage(Level level, String message, Throwable... throwables);
+
+    public void setLogLevel(Level logLevel) {
+        this.logLevel = logLevel;
+    }
+
+    public Level getLogLevel() {
+        return logLevel;
+    }
 }
