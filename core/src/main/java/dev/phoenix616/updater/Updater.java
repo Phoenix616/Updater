@@ -578,18 +578,11 @@ public abstract class Updater {
 
     private Config getConfig(File file) {
         saveResource(file);
-        Config fallbackConfig;
         try {
-            fallbackConfig = ConfigFactory.parseResourcesAnySyntax(file.getName());
-        } catch (ConfigException e) {
-            log(Level.SEVERE, "Error while loading " + file.getName() + " fallback config!", e);
-            fallbackConfig = ConfigFactory.empty("Empty " + file.getName() + " fallback due to loading error: " + e.getMessage());
-        }
-        try {
-            return ConfigFactory.parseFile(file).withFallback(fallbackConfig);
+            return ConfigFactory.parseFile(file);
         } catch (ConfigException e) {
             log(Level.SEVERE, "Error while loading " + file.getPath() + " config!", e);
-            return fallbackConfig;
+            return ConfigFactory.empty("Empty config due to error loading file!");
         }
     }
 
