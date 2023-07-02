@@ -23,7 +23,7 @@ The following sources can be used for updating:
 - [ ] Show changes between versions
 - [ ] Specify semantic version update level
 - [ ] Configurator utility
-- [ ] More sources (e.g. CIs like GitHub actions, Travis or Circle. PPs welcome!)
+- [ ] More sources (e.g. CIs like GitHub actions, Travis or Circle. PRs welcome!)
 - [ ] Plugin implementation
 - [ ] Plugin-provided updater configs
 - [ ] Provide a hosted repository for update configs of popular plugins
