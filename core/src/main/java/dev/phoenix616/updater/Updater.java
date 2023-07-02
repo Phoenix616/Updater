@@ -360,7 +360,7 @@ public abstract class Updater {
                                 try {
                                     zipEntryPattern = Pattern.compile(zipEntryPatternString);
                                 } catch (PatternSyntaxException ex) {
-                                    log(Level.SEVERE, "Could not compile regex pattern " + zipEntryPattern + " for " + plugin.getName());
+                                    log(Level.SEVERE, "Could not compile zip-entry-pattern regex " + zipEntryPatternString + " for " + plugin.getName());
                                 }
                             }
                             Pattern finalZipEntryPattern = zipEntryPattern;

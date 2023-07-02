@@ -49,7 +49,7 @@ The program uses multiple configuration files for specifying where the updates f
   Required plugin placeholders: `pluginid` (can be obtained from [here](https://servermods.forgesvc.net/servermods/projects?search=worldedit))
 - `github` Downloads GitHub releases.  
   Required plugin placeholders: `user`
-  Optional: `repository` (Defaults to plugin name), `token` or `username` and `password`
+  Optional: `repository` (Defaults to plugin name), `file-pattern` (to match a specific file of a release), `token` or `username` and `password`
 - `gitlab` Downloads GitLab releases.  
   Required plugin placeholders: `user`
   Optional: `repository` (Defaults to plugin name), `token`, `apiurl` (Defaults to `https://gitlab.com/api/v4/`)

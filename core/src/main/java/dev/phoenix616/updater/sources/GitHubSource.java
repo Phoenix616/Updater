@@ -43,6 +43,8 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class GitHubSource extends UpdateSource {
 
@@ -75,12 +77,8 @@ public class GitHubSource extends UpdateSource {
                                     && ((JsonObject) release).has("assets")
                                     && ((JsonObject) release).get("assets").isJsonArray()) {
                                 for (JsonElement asset : ((JsonObject) release).getAsJsonArray("assets")) {
-                                    if (asset.isJsonObject()
-                                            && ((JsonObject) asset).has("content_type")) {
-                                        String contentType = ((JsonObject) asset).get("content_type").getAsString();
-                                        if (ContentType.JAR.matches(contentType) || ContentType.ZIP.matches(contentType)) {
-                                            return ((JsonObject) release).get("tag_name").getAsString();
-                                        }
+                                    if (matches(config, asset)) {
+                                        return ((JsonObject) release).get("tag_name").getAsString();
                                     }
                                 }
                             }
@@ -119,14 +117,8 @@ public class GitHubSource extends UpdateSource {
                                 && ((JsonObject) release).has("assets")
                                 && ((JsonObject) release).get("assets").isJsonArray()) {
                             for (JsonElement asset : ((JsonArray) ((JsonObject) release).get("assets"))) {
-                                if (asset.isJsonObject()
-                                        && ((JsonObject) asset).has("browser_download_url")
-                                        && ((JsonObject) asset).has("content_type")
-                                        && ((JsonObject) asset).has("name")) {
-                                    String contentType = ((JsonObject) asset).get("content_type").getAsString();
-                                    if (ContentType.JAR.matches(contentType) || ContentType.ZIP.matches(contentType)) {
-                                        return new URL(((JsonObject) asset).get("browser_download_url").getAsString());
-                                    }
+                                if (matches(config, asset)) {
+                                    return new URL(((JsonObject) asset).get("browser_download_url").getAsString());
                                 }
                             }
                         }
@@ -137,6 +129,29 @@ public class GitHubSource extends UpdateSource {
             }
         }
         throw new FileNotFoundException("Not found");
+    }
+
+    private boolean matches(PluginConfig config, JsonElement asset) {
+        if (asset.isJsonObject()
+                && ((JsonObject) asset).has("browser_download_url")
+                && ((JsonObject) asset).has("content_type")
+                && ((JsonObject) asset).has("name")) {
+            String contentType = ((JsonObject) asset).get("content_type").getAsString();
+            if (ContentType.JAR.matches(contentType) || ContentType.ZIP.matches(contentType)) {
+                String filePatternString = config.getPlaceholders().get("file-pattern");
+                if (filePatternString == null) {
+                    return true;
+                }
+                try {
+                    Pattern filePattern = Pattern.compile(filePatternString);
+                    String name = ((JsonObject) asset).get("name").getAsString();
+                    return filePattern.matcher(name).matches();
+                } catch (PatternSyntaxException ex) {
+                    updater.log(Level.SEVERE, "Could not compile file-pattern regex " + filePatternString + " for " + config.getName());
+                }
+            }
+        }
+        return false;
     }
 
     @Override
