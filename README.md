@@ -13,7 +13,7 @@ The following sources can be used for updating:
 - [Modrinth](https://modrinth.com)
 - TeamCity CI builds (e.g. for WorldGuard/WorldEdit)
 - Own hosted Jenkins (via direct download source or if locally hosted file source)
-- [SpigotMC](https://spigotmc.org) (downloads will most likely fail due to DDOS protection, it tries to scan resource pages for GitHub releases too though)
+- [SpigotMC](https://spigotmc.org) using [Spiget](https://spiget.org) (Downloads might fail depending on whether Spiget has the files cached or not as SpigotMC.org uses DDOS protection in front of downloads. The source tries to scan resource pages for GitHub releases too though)
 
 ## ToDo
 
