@@ -18,6 +18,9 @@ package dev.phoenix616.updater.sources;
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.JsonPathException;
+import com.typesafe.config.Config;
 import de.themoep.minedown.adventure.Replacer;
 import dev.phoenix616.updater.PluginConfig;
 import dev.phoenix616.updater.Updater;
@@ -30,26 +33,47 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.List;
+import java.util.Collections;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class DirectSource extends UpdateSource {
-
     private final String latestVersion;
-    private final String download;
 
-    public DirectSource(String name, Updater updater, String latestVersion, String download, List<String> requiredPlaceholders) {
-        super(updater, SourceType.DIRECT, name, requiredPlaceholders);
-        this.latestVersion = latestVersion;
-        this.download = download;
+    private final String download;
+    private final String versionPath;
+    private final String versionRegex;
+    private final String downloadPath;
+    private final String downloadRegex;
+
+    public DirectSource(String name, Updater updater, Config config) {
+        super(updater, SourceType.DIRECT, name, config.hasPath("required-placeholders")
+                ? config.getStringList("required-placeholders") : Collections.emptyList());
+        this.latestVersion = config.getString("latest-version");
+        this.download = config.getString("download");
+        this.versionPath = config.hasPath("version-json-path") ? config.getString("version-json-path") : null;
+        this.versionRegex = config.hasPath("version-regex-pattern") ? config.getString("version-regex-pattern") : null;
+        this.downloadPath = config.hasPath("download-json-path") ? config.getString("download-json-path") : null;
+        this.downloadRegex = config.hasPath("download-regex-pattern") ? config.getString("download-regex-pattern") : null;
     }
 
     @Override
     public String getLatestVersion(PluginConfig config) {
         try {
-            String r = updater.query(new URL(new Replacer().replace(config.getPlaceholders()).replaceIn(latestVersion)));
+            Replacer replacer = new Replacer().replace(config.getPlaceholders());
+            String r = updater.query(new URL(replacer.replaceIn(latestVersion)));
             if (r != null && !r.isEmpty()) {
-                return r;
+                try {
+                    return getParsedValue(config.getName(), r, versionPath, versionRegex, replacer);
+                } catch (PatternSyntaxException e) {
+                    updater.log(Level.SEVERE, "Invalid regex pattern for getting latest direct version for " + config.getName() + " from source " + getName() + "! " + e.getMessage());
+                } catch (JsonPathException e) {
+                    updater.log(Level.SEVERE, "Error while trying to use JSONPath " + versionPath + " in " +  config.getName() + " from source " + getName() + "! " + e.getMessage());
+                } catch (ClassCastException e) {
+                    updater.log(Level.SEVERE, "Invalid json result to get latest version for " + config.getName() + " from source " + getName() + "! ('" + r + "') " + e.getMessage());
+                }
             }
         } catch (MalformedURLException e) {
             updater.log(Level.SEVERE, "Invalid URL for getting latest direct version for " + config.getName() + " from source " + getName() + "! " + e.getMessage());
@@ -59,32 +83,84 @@ public class DirectSource extends UpdateSource {
 
     @Override
     public URL getUpdateUrl(PluginConfig config) throws MalformedURLException {
-        return new URL(new Replacer().replace(config.getPlaceholders()).replaceIn(download));
+        String version = getLatestVersion(config);
+        if (version != null) {
+            Replacer replacer = new Replacer().replace(config.getPlaceholders()).replace("version", version);
+            if (downloadPath == null && downloadRegex == null) {
+                return new URL(replacer.replaceIn(download));
+            }
+            String downloadQuery = updater.query(new URL(replacer.replaceIn(download)));
+            if (downloadQuery != null && !downloadQuery.isEmpty()) {
+                String downloadUrl = getParsedValue(config.getName(), downloadQuery, downloadPath, downloadRegex, replacer);
+                if (downloadUrl != null) {
+                    return new URL(downloadUrl);
+                }
+            }
+        }
+        return null;
     }
 
     @Override
     public File downloadUpdate(PluginConfig config) {
-        String version = getLatestVersion(config);
-        if (version != null) {
+        try {
+            URL source = getUpdateUrl(config);
+            if (source == null) {
+                updater.log(Level.SEVERE, "No download URL found for " + config.getName() + " from source " + getName() + "!");
+                return null;
+            }
+            File target = new File(updater.getTempFolder(), config.getName() + "-" + source.getPath().substring(source.getPath().lastIndexOf('/') + 1));
 
-            try {
-                URL source = getUpdateUrl(config);
-                File target = new File(updater.getTempFolder(), config.getName() + "-" + source.getPath().substring(source.getPath().lastIndexOf('/') + 1));
-
-                HttpURLConnection con = (HttpURLConnection) source.openConnection();
-                con.setUseCaches(false);
-                con.setRequestProperty("User-Agent", updater.getUserAgent());
-                con.connect();
-                try (InputStream in = con.getInputStream()) {
-                    if (Files.copy(in, target.toPath(), StandardCopyOption.REPLACE_EXISTING) > 0) {
-                        return target;
-                    }
+            HttpURLConnection con = (HttpURLConnection) source.openConnection();
+            con.setUseCaches(false);
+            con.setRequestProperty("User-Agent", updater.getUserAgent());
+            con.connect();
+            try (InputStream in = con.getInputStream()) {
+                if (Files.copy(in, target.toPath(), StandardCopyOption.REPLACE_EXISTING) > 0) {
+                    return target;
                 }
-            } catch (IOException e) {
-                updater.log(Level.SEVERE, "Error while trying to download update " + version + " for " + config.getName() + " from source " + getName() + "! " + e.getMessage());
+            }
+        } catch (IOException e) {
+            updater.log(Level.SEVERE, "Error while trying to download update for " + config.getName() + " from source " + getName() + "! (" + e.getMessage());
+        }
+        return null;
+    }
+
+    private String getParsedValue(String name, String value, String jsonPath, String regex, Replacer replacer) {
+        if (value.startsWith("[") && value.endsWith("]") || value.startsWith("{") && value.endsWith("}")) {
+            if (jsonPath != null) {
+                try {
+                    Object rawValue = JsonPath.compile(replacer.replaceIn(jsonPath)).read(value);
+                    if (rawValue != null) {
+                        value = rawValue.toString();
+                    } else {
+                        updater.log(Level.SEVERE, "No value found for JSON path '" + jsonPath + "' for " + name + " from source " + getName() + " in json '" + value + "'!");
+                        return null;
+                    }
+                } catch (JsonPathException e) {
+                    updater.log(Level.SEVERE, "Error while trying to use JSONPath " + jsonPath + " in " +  name + " from source " + getName() + " on '" + value + "'! " + e.getMessage());
+                }
+            } else if (regex == null) {
+                updater.log(Level.SEVERE, "No regex nor JSON path specified for " + name + " from source " + getName() + "!");
+                return null;
             }
         }
-
-        return null;
+        if (regex != null) {
+            try {
+                Matcher matcher = Pattern.compile(replacer.replaceIn(regex)).matcher(value);
+                if (matcher.matches()) {
+                    if (matcher.groupCount() > 0) {
+                        value = matcher.group(1);
+                    } else {
+                        value = matcher.group();
+                    }
+                } else {
+                    updater.log(Level.SEVERE, "Return value '" + value + "' does not match regex pattern '" + regex + "' in " + name + " from source " + getName() + "!");
+                    return null;
+                }
+            } catch (PatternSyntaxException e) {
+                updater.log(Level.SEVERE, "Invalid regex pattern '" + regex + "' in source " + getName() + "! " + e.getMessage());
+            }
+        }
+        return value;
     }
 }

@@ -120,9 +120,7 @@ public abstract class Updater {
                         addSource(new DirectSource(
                                 sourceName,
                                 this,
-                                sourceConfig.getString("latest-version"),
-                                sourceConfig.getString("download"),
-                                sourceConfig.hasPath("required-placeholders") ? sourceConfig.getStringList("required-placeholders") : Collections.emptyList()
+                                sourceConfig
                         ));
                         break;
                     case TEAMCITY:

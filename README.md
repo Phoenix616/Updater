@@ -67,8 +67,12 @@ The program uses multiple configuration files for specifying where the updates f
   Required plugin placeholders: `project`, `buildtype`
 - `direct` Queries the version and downloads the jar directly from an URL. E.g. like Jenkins allows it.  
   Required placeholders are defined in the `sources.hocon` entry
-- `direct` Queries the version and copies the jar directly from a file location. E.g. like you can do it with Jenkins if it runs on the same server.  
+- `file` Queries the version and copies the jar directly from a file location. E.g. like you can do it with Jenkins if it runs on the same server.  
   Required placeholders are defined in the `sources.hocon` entry 
+
+Direct source version checks which return more than just the version can have an additional config option `version-regex-pattern` or `version-json-path` to specify a [JSON path](https://github.com/json-path/JsonPath?tab=readme-ov-file#operators) to the version string in the response json of the query. (See [this online tool](https://jsonpath.com/) if you need help with JSON paths)
+
+Direct source versions which do not use a static nor versioned url for downloads can use the `download-regex-pattern` or `download-json-path` config options similarly to the versions one to query the actual update url from the response of querying the `download` url.
 
 Downloads that return a zip file can use the `zip-entry-pattern` placeholder to define the regex pattern of the file to look for inside the zip file.
 
