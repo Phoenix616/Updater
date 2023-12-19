@@ -46,7 +46,7 @@ import java.util.logging.Level;
 public class BukkitSource extends UpdateSource {
 
     private static final List<String> REQUIRED_PLACEHOLDERS = Arrays.asList("pluginid");
-    private static final String VERSION_URL = "https://api.curseforge.com/servermods/files?projectIds=%pluginid%";
+    private static final String VERSION_URL = "https://api.curseforge.com/servermods/files?projectIds=%pluginid%,10";
 
     public BukkitSource(Updater updater) {
         super(updater, SourceType.BUKKIT, REQUIRED_PLACEHOLDERS);
@@ -63,11 +63,16 @@ public class BukkitSource extends UpdateSource {
             if (s != null) {
                 try {
                     JsonElement json = new JsonParser().parse(s);
-                    if (json.isJsonArray() && ((JsonArray) json).size() > 0) {
-                        JsonObject lastUpdate = ((JsonArray) json).get(((JsonArray) json).size() - 1).getAsJsonObject();
-                        return lastUpdate.get("name").getAsString();
+                    if (json instanceof JsonArray jsonArray) {
+                        int projectId = Integer.parseInt(config.getPlaceholders().get("pluginid"));
+                        for (int i = jsonArray.size() - 1; i >= 0; i--) {
+                            JsonObject version = jsonArray.get(i).getAsJsonObject();
+                            if (version.has("projectId") && version.get("projectId").getAsInt() == projectId) {
+                                return version.get("name").getAsString();
+                            }
+                        }
                     }
-                } catch (JsonParseException | IllegalStateException e) {
+                } catch (JsonParseException | IllegalStateException | IllegalArgumentException e) {
                     updater.log(Level.SEVERE, "Invalid Json returned when getting latest version for " + config.getName() + " from source " + getName() + ": " + s + ". Error: " + e.getMessage());
                 }
             }
@@ -112,7 +117,7 @@ public class BukkitSource extends UpdateSource {
             try {
                 JsonObject lastUpdate = getUpdateInfo(config);
                 String version = lastUpdate.get("name").getAsString();
-                String downloadUrl = lastUpdate.get("fileUrl").getAsString();
+                String downloadUrl = lastUpdate.get("downloadUrl").getAsString();
                 String md5 = lastUpdate.get("md5").getAsString();
 
                 File target = new File(updater.getTempFolder(), config.getName() + "-" + lastUpdate.get("fileName").getAsString());
