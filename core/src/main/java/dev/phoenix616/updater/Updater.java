@@ -165,6 +165,7 @@ public abstract class Updater {
      */
     public boolean run(String[] args) {
         String pluginName = null;
+        boolean searchExistingJars = true;
         boolean checkOnly = false;
         boolean dontLink = getDontLink();
 
@@ -219,6 +220,8 @@ public abstract class Updater {
                 checkOnly = true;
             } else if ("d".equals(par) || "dont-link".equalsIgnoreCase(par)) {
                 dontLink = true;
+            } else if ("dont-search-existing-jars".equalsIgnoreCase(par)) {
+                searchExistingJars = false;
             }
         }
 
@@ -247,7 +250,9 @@ public abstract class Updater {
         if (plugin != null) {
             r = check(plugin, !checkOnly, dontLink);
         } else {
-            checkExistingJars();
+            if (searchExistingJars) {
+                searchExistingJars();
+            }
             r = check(!checkOnly, dontLink);
         }
 
@@ -263,7 +268,7 @@ public abstract class Updater {
         return true;
     }
 
-    private void checkExistingJars() {
+    private void searchExistingJars() {
         for (File file : Objects.requireNonNull(getTargetFolder().listFiles((dir, name) -> name.toLowerCase(Locale.ROOT).endsWith(".jar")))) {
             String pluginName = file.getName().substring(0, file.getName().length() - 4);
             if (getPlugin(pluginName) != null) {

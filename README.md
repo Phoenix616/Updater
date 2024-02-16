@@ -40,6 +40,7 @@ If the plugin option is not specified then it will scan all jar files in the tar
 - `-c`, `--check-only` Only check for new versions, don't download updates (*Optional*)
 - `-d`, `--dont-link`  Only download new versions, don't link them (*Optional*)
 - `-l <level>`, `--log-level <level>`  Only print messages of the specified level or higher (*Optional*, default: `INFO`)
+- `dont-search-existing-jars` Don't search for existing jars in the target folder to find new plugins (*Optional*)
 
 ### Configs
 The program uses multiple configuration files for specifying where the updates for different plugins should come from. These are the `plugins.hocon` and `sources.hocon` files. They configure individual plugins and custom sources respectively.
