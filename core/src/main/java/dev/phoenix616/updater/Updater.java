@@ -172,17 +172,24 @@ public abstract class Updater {
         String par = "";
         for (int i = 0; i < args.length; i++) {
             int start = 0;
-            if (args[i].startsWith("-")) {
-                start = 1;
-            } else if (args[i].startsWith("--")) {
+            if (args[i].startsWith("--")) {
                 start = 2;
+            } else if (args[i].startsWith("-")) {
+                start = 1;
             } else if (par.isEmpty()){
                 log(Level.WARNING, "Wrong parameter " + args[i] + "!");
                 return false;
             }
 
             par = args[i].substring(start);
-            if (i + 1 < args.length) {
+
+            if ("c".equals(par) || "check-only".equalsIgnoreCase(par)) {
+                checkOnly = true;
+            } else if ("d".equals(par) || "dont-link".equalsIgnoreCase(par)) {
+                dontLink = true;
+            } else if ("dont-search-existing-jars".equalsIgnoreCase(par)) {
+                searchExistingJars = false;
+            } else if (i + 1 < args.length) {
                 i++;
                 String value = args[i];
                 if (value.startsWith("\"")) {
@@ -214,14 +221,6 @@ public abstract class Updater {
                         return true;
                     }
                 }
-            }
-
-            if ("c".equals(par) || "check-only".equalsIgnoreCase(par)) {
-                checkOnly = true;
-            } else if ("d".equals(par) || "dont-link".equalsIgnoreCase(par)) {
-                dontLink = true;
-            } else if ("dont-search-existing-jars".equalsIgnoreCase(par)) {
-                searchExistingJars = false;
             }
         }
 
