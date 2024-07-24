@@ -49,7 +49,7 @@ public class ModrinthSource extends UpdateSource {
 
     private static final List<String> REQUIRED_PLACEHOLDERS = Arrays.asList("user");
     private static final String API_HEADER = "application/json";
-    private static final String VERSION_URL = "https://api.modrinth.com/v2/project/%project%/versions&featured=%featured%";
+    private static final String VERSION_URL = "https://api.modrinth.com/v2/project/%project%/version?featured=%featured%";
 
     public ModrinthSource(Updater updater) {
         super(updater, SourceType.MODRINTH, REQUIRED_PLACEHOLDERS);
