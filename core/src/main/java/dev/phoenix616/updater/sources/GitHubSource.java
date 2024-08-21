@@ -176,8 +176,10 @@ public class GitHubSource extends UpdateSource {
                                     && ((JsonObject) release).get("assets").isJsonArray()) {
                                 for (JsonElement asset : ((JsonArray) ((JsonObject) release).get("assets"))) {
                                     if (matches(config, asset)) {
+                                        String name = ((JsonObject) asset).get("name").getAsString();
                                         String version = ((JsonObject) release).get("tag_name").getAsString();
-                                        File target = new File(updater.getTempFolder(), config.getName() + "-" + ((JsonObject) asset).get("name").getAsString());
+                                        updater.log(Level.FINE, "Downloading update file for " + config.getName() + " " + version + ": " + name);
+                                        File target = new File(updater.getTempFolder(), config.getName() + "-" + version + "-" + name);
 
                                         try {
                                             URL source = new URL(((JsonObject) asset).get("browser_download_url").getAsString());
