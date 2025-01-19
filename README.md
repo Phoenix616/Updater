@@ -58,8 +58,7 @@ The program uses multiple configuration files for specifying where the updates f
   Required plugin placeholders: `user`
   Optional: `project` (Defaults to plugin name), `channel`, `platform`, `platform-version`
 - `modrinth` Downloads Modrinth releases.
-  Required plugin placeholders: `user`
-  Optional: `project` (Defaults to plugin name), `featured` (Defaults to true), `platform`, `platform-version`
+  Optional placeholders: `project` (Defaults to plugin name), `featured` (Defaults to true), `platform`, `platform-version`
 - `spigot` Tries to download from SpigotMC.org and falls back to GitHub if found.  
   Required plugin placeholders: `resourceid`
 
