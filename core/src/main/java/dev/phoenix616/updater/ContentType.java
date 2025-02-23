@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.HashSet;
 
 public enum ContentType {
-    JAR("octet-stream", "java-archive", "x-java-archive"),
+    JAR("jar", "octet-stream", "java-archive", "x-java-archive"),
     ZIP("zip", "x-zip", "x-zip-compressed", "x-compressed");
 
     private static final String APPLICATION = "application/";
