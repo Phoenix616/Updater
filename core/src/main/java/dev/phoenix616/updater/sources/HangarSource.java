@@ -109,7 +109,7 @@ public class HangarSource extends UpdateSource {
     }
 
     private String getMd5Hash(JsonObject download) {
-        if (download.has("fileInfo") && !download.get("fileInfo").isJsonObject()) {
+        if (download.has("fileInfo") && download.get("fileInfo").isJsonObject()) {
             JsonObject fileInfo = download.getAsJsonObject("fileInfo");
             if (fileInfo.has("md5Hash") && fileInfo.get("md5Hash").isJsonPrimitive()) {
                 return download.get("md5Hash").getAsString();
