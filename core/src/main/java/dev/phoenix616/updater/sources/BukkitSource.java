@@ -45,26 +45,26 @@ import java.util.logging.Level;
 
 public class BukkitSource extends UpdateSource {
 
-    private static final List<String> REQUIRED_PLACEHOLDERS = Arrays.asList("pluginid");
+    private static final List<String> REQUIRED_PARAMETERS = Arrays.asList("pluginid");
     private static final String VERSION_URL = "https://api.curseforge.com/servermods/files?projectIds=%pluginid%,10";
 
     public BukkitSource(Updater updater) {
-        super(updater, SourceType.BUKKIT, REQUIRED_PLACEHOLDERS);
+        super(updater, SourceType.BUKKIT, REQUIRED_PARAMETERS);
     }
 
     @Override
     public String getLatestVersion(PluginConfig config) {
         try {
             String[] properties = new String[0];
-            if (config.getPlaceholders().containsKey("apikey")) {
-                properties = new String[]{"X-API-Key", config.getPlaceholders().get("apikey")};
+            if (config.getParameters().containsKey("apikey")) {
+                properties = new String[]{"X-API-Key", config.getParameters().get("apikey")};
             }
-            String s = updater.query(new URL(new Replacer().replace(config.getPlaceholders()).replaceIn(VERSION_URL)), properties);
+            String s = updater.query(new URL(new Replacer().replace(config.getParameters()).replaceIn(VERSION_URL)), properties);
             if (s != null) {
                 try {
                     JsonElement json = new JsonParser().parse(s);
                     if (json instanceof JsonArray jsonArray) {
-                        int projectId = Integer.parseInt(config.getPlaceholders().get("pluginid"));
+                        int projectId = Integer.parseInt(config.getParameters().get("pluginid"));
                         for (int i = jsonArray.size() - 1; i >= 0; i--) {
                             JsonObject version = jsonArray.get(i).getAsJsonObject();
                             if (version.has("projectId") && version.get("projectId").getAsInt() == projectId) {
@@ -84,10 +84,10 @@ public class BukkitSource extends UpdateSource {
 
     private JsonObject getUpdateInfo(PluginConfig config) throws MalformedURLException, JsonParseException {
         String[] properties = new String[0];
-        if (config.getPlaceholders().containsKey("apikey")) {
-            properties = new String[]{"X-API-Key", config.getPlaceholders().get("apikey")};
+        if (config.getParameters().containsKey("apikey")) {
+            properties = new String[]{"X-API-Key", config.getParameters().get("apikey")};
         }
-        String s = updater.query(new URL(new Replacer().replace(config.getPlaceholders()).replaceIn(VERSION_URL)), properties);
+        String s = updater.query(new URL(new Replacer().replace(config.getParameters()).replaceIn(VERSION_URL)), properties);
         if (s != null) {
             JsonElement json = new JsonParser().parse(s);
             if (json.isJsonArray() && ((JsonArray) json).size() > 0) {
@@ -127,8 +127,8 @@ public class BukkitSource extends UpdateSource {
 
                     HttpURLConnection con = (HttpURLConnection) source.openConnection();
                     con.setRequestProperty("User-Agent", updater.getUserAgent());
-                    if (config.getPlaceholders().containsKey("apikey")) {
-                        con.setRequestProperty("X-API-Key", config.getPlaceholders().get("apikey"));
+                    if (config.getParameters().containsKey("apikey")) {
+                        con.setRequestProperty("X-API-Key", config.getParameters().get("apikey"));
                     }
                     con.setUseCaches(false);
                     con.connect();

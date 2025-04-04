@@ -48,25 +48,25 @@ import java.util.regex.PatternSyntaxException;
 
 public class GitHubSource extends UpdateSource {
 
-    private static final List<String> REQUIRED_PLACEHOLDERS = Arrays.asList("user");
+    private static final List<String> REQUIRED_PARAMETERS = List.of("user");
     private static final String API_HEADER = "application/vnd.github.v3+json";
     private static final String RELEASES_URL = "https://api.github.com/repos/%user%/%repository%/releases";
 
     public GitHubSource(Updater updater) {
-        super(updater, SourceType.GITHUB, REQUIRED_PLACEHOLDERS);
+        super(updater, SourceType.GITHUB, REQUIRED_PARAMETERS);
     }
 
     @Override
     public String getLatestVersion(PluginConfig config) {
         try {
             List<String> properties = new ArrayList<>(Arrays.asList("Accept", API_HEADER));
-            if (config.getPlaceholders().containsKey("token")) {
-                Collections.addAll(properties, "Authorization", "token " + config.getPlaceholders().get("token"));
-            } else if (config.getPlaceholders().containsKey("username") && config.getPlaceholders().containsKey("password")) {
-                String userPass = config.getPlaceholders().get("username") + ":" + config.getPlaceholders().get("password");
+            if (config.getParameters().containsKey("token")) {
+                Collections.addAll(properties, "Authorization", "token " + config.getParameters().get("token"));
+            } else if (config.getParameters().containsKey("username") && config.getParameters().containsKey("password")) {
+                String userPass = config.getParameters().get("username") + ":" + config.getParameters().get("password");
                 Collections.addAll(properties, "Authorization", "Basic " + Base64.getEncoder().encodeToString(userPass.getBytes()));
             }
-            String s = updater.query(new URL(new Replacer().replace(config.getPlaceholders("repository")).replaceIn(RELEASES_URL)), properties.toArray(new String[0]));
+            String s = updater.query(new URL(new Replacer().replace(config.getParameters("repository")).replaceIn(RELEASES_URL)), properties.toArray(new String[0]));
             if (s != null) {
                 try {
                     JsonElement json = new JsonParser().parse(s);
@@ -100,13 +100,13 @@ public class GitHubSource extends UpdateSource {
     @Override
     public URL getUpdateUrl(PluginConfig config) throws MalformedURLException, FileNotFoundException {
         List<String> properties = new ArrayList<>(Arrays.asList("Accept", API_HEADER));
-        if (config.getPlaceholders().containsKey("token")) {
-            Collections.addAll(properties, "Authorization", "token " + config.getPlaceholders().get("token"));
-        } else if (config.getPlaceholders().containsKey("username") && config.getPlaceholders().containsKey("password")) {
-            String userPass = config.getPlaceholders().get("username") + ":" + config.getPlaceholders().get("password");
+        if (config.getParameters().containsKey("token")) {
+            Collections.addAll(properties, "Authorization", "token " + config.getParameters().get("token"));
+        } else if (config.getParameters().containsKey("username") && config.getParameters().containsKey("password")) {
+            String userPass = config.getParameters().get("username") + ":" + config.getParameters().get("password");
             Collections.addAll(properties, "Authorization", "Basic " + Base64.getEncoder().encodeToString(userPass.getBytes()));
         }
-        String s = updater.query(new URL(new Replacer().replace(config.getPlaceholders("repository")).replaceIn(RELEASES_URL)), properties.toArray(new String[0]));
+        String s = updater.query(new URL(new Replacer().replace(config.getParameters("repository")).replaceIn(RELEASES_URL)), properties.toArray(new String[0]));
         if (s != null) {
             try {
                 JsonElement json = new JsonParser().parse(s);
@@ -138,7 +138,7 @@ public class GitHubSource extends UpdateSource {
                 && ((JsonObject) asset).has("name")) {
             String contentType = ((JsonObject) asset).get("content_type").getAsString();
             if (ContentType.JAR.matches(contentType) || ContentType.ZIP.matches(contentType)) {
-                String filePatternString = config.getPlaceholders().get("file-pattern");
+                String filePatternString = config.getParameters().get("file-pattern");
                 if (filePatternString == null) {
                     return true;
                 }
@@ -158,13 +158,13 @@ public class GitHubSource extends UpdateSource {
     public File downloadUpdate(PluginConfig config) {
         try {
             List<String> properties = new ArrayList<>(Arrays.asList("Accept", API_HEADER));
-            if (config.getPlaceholders().containsKey("token")) {
-                Collections.addAll(properties, "Authorization", "token " + config.getPlaceholders().get("token"));
-            } else if (config.getPlaceholders().containsKey("username") && config.getPlaceholders().containsKey("password")) {
-                String userPass = config.getPlaceholders().get("username") + ":" + config.getPlaceholders().get("password");
+            if (config.getParameters().containsKey("token")) {
+                Collections.addAll(properties, "Authorization", "token " + config.getParameters().get("token"));
+            } else if (config.getParameters().containsKey("username") && config.getParameters().containsKey("password")) {
+                String userPass = config.getParameters().get("username") + ":" + config.getParameters().get("password");
                 Collections.addAll(properties, "Authorization", "Basic " + Base64.getEncoder().encodeToString(userPass.getBytes()));
             }
-            String s = updater.query(new URL(new Replacer().replace(config.getPlaceholders("repository")).replaceIn(RELEASES_URL)), properties.toArray(new String[0]));
+            String s = updater.query(new URL(new Replacer().replace(config.getParameters("repository")).replaceIn(RELEASES_URL)), properties.toArray(new String[0]));
             if (s != null) {
                 try {
                     JsonElement json = new JsonParser().parse(s);
@@ -188,10 +188,10 @@ public class GitHubSource extends UpdateSource {
                                             con.setRequestProperty("User-Agent", updater.getUserAgent());
                                             con.addRequestProperty("Accept", API_HEADER);
                                             con.addRequestProperty("Accept", "application/octet-stream");
-                                            if (config.getPlaceholders().containsKey("token")) {
-                                                con.addRequestProperty("Authorization", "token " + config.getPlaceholders().get("token"));
-                                            } else if (config.getPlaceholders().containsKey("username") && config.getPlaceholders().containsKey("password")) {
-                                                String userPass = config.getPlaceholders().get("username") + ":" + config.getPlaceholders().get("password");
+                                            if (config.getParameters().containsKey("token")) {
+                                                con.addRequestProperty("Authorization", "token " + config.getParameters().get("token"));
+                                            } else if (config.getParameters().containsKey("username") && config.getParameters().containsKey("password")) {
+                                                String userPass = config.getParameters().get("username") + ":" + config.getParameters().get("password");
                                                 con.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString(userPass.getBytes()));
                                             }
                                             con.setUseCaches(false);

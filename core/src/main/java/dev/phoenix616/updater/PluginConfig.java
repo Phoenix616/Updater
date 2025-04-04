@@ -28,27 +28,35 @@ public class PluginConfig {
     private String name;
     private UpdateSource source;
     private String fileNameFormat;
-    private Map<String, String> placeholders;
+    private Map<String, String> parameters;
 
-    public PluginConfig(String name, UpdateSource source, String fileNameFormat, Map<String, String> placeholders) {
+    public PluginConfig(String name, UpdateSource source, String fileNameFormat, Map<String, String> parameters) {
         this.name = name;
         this.source = source;
         this.fileNameFormat = fileNameFormat;
-        this.placeholders = new LinkedHashMap<>(placeholders);
-        this.placeholders.putIfAbsent("name", name);
+        this.parameters = new LinkedHashMap<>(parameters);
+        this.parameters.putIfAbsent("name", name);
     }
 
+    public Map<String, String> getParameters() {
+        return parameters;
+    }
+
+    /*
+     * @deprecated Use {@link #getParameters()} instead
+     */
+    @Deprecated
     public Map<String, String> getPlaceholders() {
-        return placeholders;
+        return getParameters();
     }
 
-    public Map<String, String> getPlaceholders(String nameFallback) {
-        if (getPlaceholders().containsKey(nameFallback)) {
-            return getPlaceholders();
+    public Map<String, String> getParameters(String nameFallback) {
+        if (getParameters().containsKey(nameFallback)) {
+            return getParameters();
         }
-        Map<String, String> placeholders = new LinkedHashMap<>(getPlaceholders());
-        placeholders.put(nameFallback, getName());
-        return placeholders;
+        Map<String, String> parameters = new LinkedHashMap<>(getParameters());
+        parameters.put(nameFallback, getName());
+        return parameters;
     }
 
     public String getFileName(String version) {

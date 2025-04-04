@@ -31,25 +31,35 @@ public abstract class UpdateSource {
     protected final Updater updater;
     private final SourceType sourceType;
     private final String name;
-    private final Collection<String> requiredPlaceholders;
+    private final Collection<String> requiredParameters;
 
-    public UpdateSource(Updater updater, SourceType sourceType, Collection<String> requiredPlaceholders) {
-        this(updater, sourceType, sourceType.name(), requiredPlaceholders);
+    public UpdateSource(Updater updater, SourceType sourceType, Collection<String> requiredParameters) {
+        this(updater, sourceType, sourceType.name(), requiredParameters);
     }
 
-    public UpdateSource(Updater updater, SourceType sourceType, String name, Collection<String> requiredPlaceholders) {
+    public UpdateSource(Updater updater, SourceType sourceType, String name, Collection<String> requiredParameters) {
         this.updater = updater;
         this.sourceType = sourceType;
         this.name = name;
-        this.requiredPlaceholders = requiredPlaceholders;
+        this.requiredParameters = requiredParameters;
     }
 
     /**
-     * Get a collection of placeholders that an update config needs to define for this source to work
-     * @return The list of placeholders
+     * Get a collection of parameters that an update config needs to define for this source to work
+     * @return The list of parameters
      */
+    public Collection<String> getRequiredParameters() {
+        return requiredParameters;
+    }
+
+    /**
+     * Get a collection of parameters that an update config needs to define for this source to work
+     * @return The list of parameters
+     * @deprecated Use {@link #getRequiredParameters()} instead
+     */
+    @Deprecated
     public Collection<String> getRequiredPlaceholders() {
-        return requiredPlaceholders;
+        return getRequiredParameters();
     }
 
     /**

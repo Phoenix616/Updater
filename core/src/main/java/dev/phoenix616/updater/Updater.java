@@ -113,8 +113,15 @@ public abstract class Updater {
                                 this,
                                 sourceConfig.getString("latest-version"),
                                 sourceConfig.getString("download"),
-                                sourceConfig.hasPath("required-placeholders") ? sourceConfig.getStringList("required-placeholders") : Collections.emptyList()
+                                sourceConfig.hasPath("required-parameters")
+                                        ? sourceConfig.getStringList("required-parameters")
+                                        : sourceConfig.hasPath("required-placeholders")
+                                                ? sourceConfig.getStringList("required-placeholders")
+                                                : Collections.emptyList()
                         ));
+                        if (sourceConfig.hasPath("required-placeholders")) {
+                            log(Level.WARNING, "File-source " + sourceName + " uses deprecated 'required-placeholders' config option! Please use 'required-parameters' instead as this will be removed in a future version!");
+                        }
                         break;
                     case DIRECT:
                         addSource(new DirectSource(
@@ -122,6 +129,9 @@ public abstract class Updater {
                                 this,
                                 sourceConfig
                         ));
+                        if (sourceConfig.hasPath("required-placeholders")) {
+                            log(Level.WARNING, "Direct-source " + sourceName + " uses deprecated 'required-placeholders' config option! Please use 'required-parameters' instead as this will be removed in a future version!");
+                        }
                         break;
                     case TEAMCITY:
                         addSource(new TeamCitySource(
@@ -150,7 +160,11 @@ public abstract class Updater {
                         pluginName,
                         source,
                         pluginConfig.getString("file-name-format"),
-                        pluginConfig.hasPath("placeholders") ? toMap(pluginConfig.getConfig("placeholders")) : Collections.emptyMap()
+                        pluginConfig.hasPath("parameters")
+                                ? toMap(pluginConfig.getConfig("parameters"))
+                                : pluginConfig.hasPath("placeholders")
+                                        ? toMap(pluginConfig.getConfig("placeholders"))
+                                        : Collections.emptyMap()
                 ));
             } catch (ConfigException | IllegalArgumentException e) {
                 log(Level.SEVERE, "Error while loading plugin " + pluginName + " config!", e);
@@ -290,7 +304,7 @@ public abstract class Updater {
                                 log(Level.INFO, "Found link to a Hanger project page in " + file.getName() + "! If you want to update from there add the following to your plugins config:\n\n"
                                         + pluginName + " {\n"
                                         + "  source = hangar\n"
-                                        + "  placeholders {\n"
+                                        + "  parameters {\n"
                                         + "    author = " + hangarAuthor + "\n"
                                         + "    project = " + hangarProject + "\n"
                                         + "  }\n"
@@ -302,7 +316,7 @@ public abstract class Updater {
                                 log(Level.INFO, "Found link to SpigotMC resource page in " + file.getName() + "! If you want to update from there add the following to your plugins config:\n\n"
                                         + pluginName + " {\n"
                                         + "  source = spigot\n"
-                                        + "  placeholders {\n"
+                                        + "  parameters {\n"
                                         + "    resourceid = " + id + "\n"
                                         + "  }\n"
                                         + "}\n");
@@ -314,7 +328,7 @@ public abstract class Updater {
                                 log(Level.INFO, "Found link to GitHub repository in " + file.getName() + "! If you want to update from there add the following to your plugins config:\n\n"
                                         + pluginName + " {\n"
                                         + "  source = github\n"
-                                        + "  placeholders {\n"
+                                        + "  parameters {\n"
                                         + "    user = " + ghUser + "\n"
                                         + "    repository = " + ghRepository + "\n"
                                         + "  }\n"
@@ -356,7 +370,7 @@ public abstract class Updater {
 
                             ZipFile zip = new ZipFile(downloadedFile);
 
-                            String zipEntryPatternString = plugin.getPlaceholders().get("zip-entry-pattern");
+                            String zipEntryPatternString = plugin.getParameters().get("zip-entry-pattern");
                             Pattern zipEntryPattern = null;
                             if (zipEntryPatternString != null) {
                                 try {
@@ -554,14 +568,14 @@ public abstract class Updater {
     }
 
     private boolean addPlugin(PluginConfig plugin) {
-        List<String> requiredPlaceholders = new ArrayList<>();
-        for (String requiredPlaceholder : plugin.getSource().getRequiredPlaceholders()) {
-            if (!plugin.getPlaceholders().containsKey(requiredPlaceholder)) {
-                requiredPlaceholders.add(requiredPlaceholder);
+        List<String> requiredParameters = new ArrayList<>();
+        for (String requiredParameter : plugin.getSource().getRequiredParameters()) {
+            if (!plugin.getParameters().containsKey(requiredParameter)) {
+                requiredParameters.add(requiredParameter);
             }
         }
-        if (!requiredPlaceholders.isEmpty()) {
-            log(Level.SEVERE, "Plugin " + plugin.getName() + " does not specify all placeholders that are required by " + plugin.getSource().getType() + " source " + plugin.getSource().getName() + "! The following placeholders are missing: " + String.join(", ", requiredPlaceholders));
+        if (!requiredParameters.isEmpty()) {
+            log(Level.SEVERE, "Plugin " + plugin.getName() + " does not specify all parameters that are required by " + plugin.getSource().getType() + " source " + plugin.getSource().getName() + "! The following parameters are missing: " + String.join(", ", requiredParameters));
             return false;
         }
 

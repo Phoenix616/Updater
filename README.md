@@ -47,33 +47,33 @@ The program uses multiple configuration files for specifying where the updates f
 
 #### Inbuilt source types
 - `bukkit` Downloads from dev.bukkit.org.  
-  Required plugin placeholders: `pluginid` (can be obtained from [here](https://servermods.forgesvc.net/servermods/projects?search=worldedit))
+  Required plugin parameters: `pluginid` (can be obtained from [here](https://servermods.forgesvc.net/servermods/projects?search=worldedit))
 - `github` Downloads GitHub releases.  
-  Required plugin placeholders: `user`
+  Required plugin parameters: `user`
   Optional: `repository` (Defaults to plugin name), `file-pattern` (to match a specific file of a release), `token` or `username` and `password`
 - `gitlab` Downloads GitLab releases.  
-  Required plugin placeholders: `user`
+  Required plugin parameters: `user`
   Optional: `repository` (Defaults to plugin name), `token`, `apiurl` (Defaults to `https://gitlab.com/api/v4/`)
 - `hangar` Downloads Hangar.papermc.io releases.
   Optional: `project` (Defaults to plugin name), `channel`, `platform`, `platform-version`
 - `modrinth` Downloads Modrinth releases.
-  Optional placeholders: `project` (Defaults to plugin name), `featured` (Defaults to true), `platform`, `platform-version`
+  Optional parameters: `project` (Defaults to plugin name), `featured` (Defaults to true), `platform`, `platform-version`
 - `spigot` Tries to download from SpigotMC.org and falls back to GitHub if found.  
-  Required plugin placeholders: `resourceid`
+  Required plugin parameters: `resourceid`
 
-#### Required placeholders for custom source types
+#### Required parameters for custom source types
 - `teamcity` Downloads from a self-hosted teamcity instance.  
-  Required plugin placeholders: `project`, `buildtype`
+  Required plugin parameters: `project`, `buildtype`
 - `direct` Queries the version and downloads the jar directly from an URL. E.g. like Jenkins allows it.  
-  Required placeholders are defined in the `sources.hocon` entry
+  Required parameters are defined in the `sources.hocon` entry
 - `file` Queries the version and copies the jar directly from a file location. E.g. like you can do it with Jenkins if it runs on the same server.  
-  Required placeholders are defined in the `sources.hocon` entry 
+  Required parameters are defined in the `sources.hocon` entry 
 
 Direct source version checks which return more than just the version can have an additional config option `version-regex-pattern` or `version-json-path` to specify a [JSON path](https://github.com/json-path/JsonPath?tab=readme-ov-file#operators) to the version string in the response json of the query. (See [this online tool](https://jsonpath.com/) if you need help with JSON paths)
 
 Direct source versions which do not use a static nor versioned url for downloads can use the `download-regex-pattern` or `download-json-path` config options similarly to the versions one to query the actual update url from the response of querying the `download` url.
 
-Downloads that return a zip file can use the `zip-entry-pattern` placeholder to define the regex pattern of the file to look for inside the zip file.
+Downloads that return a zip file can use the `zip-entry-pattern` parameter to define the regex pattern of the file to look for inside the zip file.
 
 ## Downloads
 Downloads are currently available on the Minebench.de CI server: https://ci.minebench.de/job/PhoenixUpdater/

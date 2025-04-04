@@ -47,28 +47,28 @@ import java.util.logging.Level;
 
 public class HangarSource extends UpdateSource {
 
-    private static final List<String> REQUIRED_PLACEHOLDERS = Arrays.asList("user");
+    private static final List<String> REQUIRED_PARAMETERS = List.of("user");
     private static final String API_HEADER = "application/json";
     private static final String VERSION_URL = "https://hangar.papermc.io/api/v1/projects/%project%/versions?limit=1&offset=0";
 
     public HangarSource(Updater updater) {
-        super(updater, SourceType.HANGAR, REQUIRED_PLACEHOLDERS);
+        super(updater, SourceType.HANGAR, REQUIRED_PARAMETERS);
     }
 
     private JsonObject getLatestRelease(PluginConfig config) {
         try {
             String versionUrl = VERSION_URL;
             List<String> properties = new ArrayList<>(Arrays.asList("Accept", API_HEADER));
-            if (config.getPlaceholders().containsKey("channel")) {
+            if (config.getParameters().containsKey("channel")) {
                 versionUrl += "&channel=%channel%";
             }
-            if (config.getPlaceholders().containsKey("platform")) {
+            if (config.getParameters().containsKey("platform")) {
                 versionUrl += "&platform=%platform%";
             }
-            if (config.getPlaceholders().containsKey("platform-version")) {
+            if (config.getParameters().containsKey("platform-version")) {
                 versionUrl += "&platformVersion=%platform-version%";
             }
-            String s = updater.query(new URL(new Replacer().replace(config.getPlaceholders("project")).replaceIn(versionUrl)), properties.toArray(new String[0]));
+            String s = updater.query(new URL(new Replacer().replace(config.getParameters("project")).replaceIn(versionUrl)), properties.toArray(new String[0]));
             if (s != null) {
                 try {
                     JsonElement json = new JsonParser().parse(s);
@@ -138,8 +138,8 @@ public class HangarSource extends UpdateSource {
         JsonObject release = getLatestRelease(config);
         if (release != null && release.has("downloads") && release.get("downloads").isJsonObject()) {
             JsonObject downloads = release.getAsJsonObject("downloads");
-            if (config.getPlaceholders().containsKey("platform")) {
-                String platform = config.getPlaceholders().get("platform").toUpperCase(Locale.ROOT);
+            if (config.getParameters().containsKey("platform")) {
+                String platform = config.getParameters().get("platform").toUpperCase(Locale.ROOT);
                 if (downloads.has(platform) && downloads.get(platform).isJsonObject()) {
                     return getDownloadUrl(downloads.getAsJsonObject(platform));
                 }
@@ -162,8 +162,8 @@ public class HangarSource extends UpdateSource {
             URL downloadUrl = null;
             String md5 = null;
             try {
-                if (config.getPlaceholders().containsKey("platform")) {
-                    String platform = config.getPlaceholders().get("platform").toUpperCase(Locale.ROOT);
+                if (config.getParameters().containsKey("platform")) {
+                    String platform = config.getParameters().get("platform").toUpperCase(Locale.ROOT);
                     if (downloads.has(platform) && downloads.get(platform).isJsonObject()) {
                         downloadUrl = getDownloadUrl(downloads.getAsJsonObject(platform));
                         md5 = getMd5Hash(downloads.getAsJsonObject(platform));

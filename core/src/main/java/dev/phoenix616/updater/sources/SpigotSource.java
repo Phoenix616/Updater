@@ -44,19 +44,19 @@ import java.util.regex.Matcher;
 
 public class SpigotSource extends UpdateSource {
 
-    private static final List<String> REQUIRED_PLACEHOLDERS = Arrays.asList("resourceid");
+    private static final List<String> REQUIRED_PARAMETERS = List.of("resourceid");
     private static final String VERSION_URL = "https://api.spiget.org/v2/resources/%resourceid%/versions/latest";
     private static final String DOWNLOAD_URL = "https://api.spiget.org/v2/resources/%resourceid%/versions/%versionid%/download";
     private static final String DETAILS_URL = "https://api.spiget.org/v2/resources/%resourceid%";
 
     public SpigotSource(Updater updater) {
-        super(updater, SourceType.SPIGOT, REQUIRED_PLACEHOLDERS);
+        super(updater, SourceType.SPIGOT, REQUIRED_PARAMETERS);
     }
 
     @Override
     public String getLatestVersion(PluginConfig config) {
         try {
-            String s = updater.query(new URL(new Replacer().replace(config.getPlaceholders()).replaceIn(VERSION_URL)));
+            String s = updater.query(new URL(new Replacer().replace(config.getParameters()).replaceIn(VERSION_URL)));
             if (s != null) {
                 try {
                     JsonElement json = new JsonParser().parse(s);
@@ -76,7 +76,7 @@ public class SpigotSource extends UpdateSource {
     @Override
     public URL getUpdateUrl(PluginConfig config) throws MalformedURLException, FileNotFoundException {
 
-        String s = updater.query(new URL(new Replacer().replace(config.getPlaceholders()).replaceIn(VERSION_URL)));
+        String s = updater.query(new URL(new Replacer().replace(config.getParameters()).replaceIn(VERSION_URL)));
         if (s != null) {
             try {
                 JsonElement json = new JsonParser().parse(s);
@@ -84,7 +84,7 @@ public class SpigotSource extends UpdateSource {
                         && ((JsonObject) json).has("name")
                         && ((JsonObject) json).has("id")) {
                     long id = ((JsonObject) json).get("id").getAsLong();
-                    return new URL(new Replacer().replace(config.getPlaceholders()).replace("versionid", String.valueOf(id)).replaceIn(DOWNLOAD_URL));
+                    return new URL(new Replacer().replace(config.getParameters()).replace("versionid", String.valueOf(id)).replaceIn(DOWNLOAD_URL));
                 }
             } catch (JsonParseException | IllegalStateException e) {
                 updater.log(Level.SEVERE, "Invalid Json returned when getting latest version for " + config.getName() + " from source " + getName() + ": " + s + ". Error: " + e.getMessage());
@@ -96,7 +96,7 @@ public class SpigotSource extends UpdateSource {
     @Override
     public File downloadUpdate(PluginConfig config) {
         try {
-            String s = updater.query(new URL(new Replacer().replace(config.getPlaceholders()).replaceIn(VERSION_URL)));
+            String s = updater.query(new URL(new Replacer().replace(config.getParameters()).replaceIn(VERSION_URL)));
             if (s != null) {
                 try {
                     JsonElement json = new JsonParser().parse(s);
@@ -107,7 +107,7 @@ public class SpigotSource extends UpdateSource {
                         long id = ((JsonObject) json).get("id").getAsLong();
                         File target = new File(updater.getTempFolder(), config.getFileName(version));
 
-                        URL source = new URL(new Replacer().replace(config.getPlaceholders()).replace("versionid", String.valueOf(id)).replaceIn(DOWNLOAD_URL));
+                        URL source = new URL(new Replacer().replace(config.getParameters()).replace("versionid", String.valueOf(id)).replaceIn(DOWNLOAD_URL));
                         try {
                             HttpURLConnection con = (HttpURLConnection) source.openConnection();
                             con.setRequestProperty("User-Agent", updater.getUserAgent());
@@ -122,7 +122,7 @@ public class SpigotSource extends UpdateSource {
                             } else {
                                 updater.log(Level.SEVERE, "Unable to download " + version + " for " + config.getName() + " from source " + getName() + "! " + con.getResponseMessage());
                                 if (con.getResponseCode() == HttpURLConnection.HTTP_UNAVAILABLE) {
-                                    String details = updater.query(new URL(new Replacer().replace(config.getPlaceholders()).replaceIn(DETAILS_URL)));
+                                    String details = updater.query(new URL(new Replacer().replace(config.getParameters()).replaceIn(DETAILS_URL)));
                                     JsonObject detailsJson = new JsonParser().parse(details).getAsJsonObject();
                                     if (detailsJson.has("links") && detailsJson.get("links").getAsJsonObject().size() > 0) {
                                         for (Map.Entry<String, JsonElement> link : detailsJson.get("links").getAsJsonObject().entrySet()) {
@@ -135,8 +135,8 @@ public class SpigotSource extends UpdateSource {
                                                         String ghRepository = matcher.group("repo");
 
                                                         updater.log(Level.INFO, "Found GitHub repository at " + ghUser + "/" + ghRepository + ". Checking if it has releases!");
-                                                        config.getPlaceholders().put("user", ghUser);
-                                                        config.getPlaceholders().put("repository", ghRepository);
+                                                        config.getParameters().put("user", ghUser);
+                                                        config.getParameters().put("repository", ghRepository);
                                                         UpdateSource ghSource = updater.getSource(SourceType.GITHUB.name());
                                                         String ghVersion = ghSource.getLatestVersion(config);
                                                         if (ghVersion != null) {

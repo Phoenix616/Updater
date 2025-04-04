@@ -42,21 +42,21 @@ import java.util.logging.Level;
 
 public class GitLabSource extends UpdateSource {
 
-    private static final List<String> REQUIRED_PLACEHOLDERS = Arrays.asList("user");
+    private static final List<String> REQUIRED_PARAMETERS = List.of("user");
     private static final String API_URL = "https://gitlab.com/api/v4/";
     private static final String RELEASES_URL = "%apiurl%projects/%user%%2F%repository%/releases";
 
     public GitLabSource(Updater updater) {
-        super(updater, SourceType.GITLAB, REQUIRED_PLACEHOLDERS);
+        super(updater, SourceType.GITLAB, REQUIRED_PARAMETERS);
     }
 
     @Override
     public String getLatestVersion(PluginConfig config) {
         try {
-            Replacer replacer = new Replacer().replace("apiurl", API_URL).replace(config.getPlaceholders("repository"));
+            Replacer replacer = new Replacer().replace("apiurl", API_URL).replace(config.getParameters("repository"));
             String[] properties = new String[0];
-            if (config.getPlaceholders().containsKey("token")) {
-                properties = new String[] {"Private-Token", config.getPlaceholders().get("token")};
+            if (config.getParameters().containsKey("token")) {
+                properties = new String[] {"Private-Token", config.getParameters().get("token")};
             }
             String s = updater.query(new URL(replacer.replaceIn(RELEASES_URL)), properties);
             if (s != null) {
@@ -93,7 +93,7 @@ public class GitLabSource extends UpdateSource {
 
     @Override
     public URL getUpdateUrl(PluginConfig config) throws MalformedURLException, FileNotFoundException {
-        Replacer replacer = new Replacer().replace("apiurl", API_URL).replace(config.getPlaceholders("repository"));
+        Replacer replacer = new Replacer().replace("apiurl", API_URL).replace(config.getParameters("repository"));
         String s = updater.query(new URL(replacer.replaceIn(RELEASES_URL)), "Accept", "application/vnd.github.v3+json");
         if (s != null) {
             try {
@@ -127,7 +127,7 @@ public class GitLabSource extends UpdateSource {
     @Override
     public File downloadUpdate(PluginConfig config) {
         try {
-            Replacer replacer = new Replacer().replace("apiurl", API_URL).replace(config.getPlaceholders("repository"));
+            Replacer replacer = new Replacer().replace("apiurl", API_URL).replace(config.getParameters("repository"));
             String s = updater.query(new URL(replacer.replaceIn(RELEASES_URL)), "Accept", "application/vnd.github.v3+json");
             if (s != null) {
                 try {
@@ -154,8 +154,8 @@ public class GitLabSource extends UpdateSource {
 
                                                 HttpURLConnection con = (HttpURLConnection) source.openConnection();
                                                 con.setRequestProperty("User-Agent", updater.getUserAgent());
-                                                if (config.getPlaceholders().containsKey("token")) {
-                                                    con.setRequestProperty("Private-Token", config.getPlaceholders().get("token"));
+                                                if (config.getParameters().containsKey("token")) {
+                                                    con.setRequestProperty("Private-Token", config.getParameters().get("token"));
                                                 }
                                                 con.setUseCaches(false);
                                                 con.connect();

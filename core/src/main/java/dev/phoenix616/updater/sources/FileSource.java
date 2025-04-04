@@ -37,15 +37,15 @@ public class FileSource extends UpdateSource {
     private final String latestVersion;
     private final String download;
 
-    public FileSource(String name, Updater updater, String latestVersion, String download, List<String> requiredPlaceholders) {
-        super(updater, SourceType.FILE, name, requiredPlaceholders);
+    public FileSource(String name, Updater updater, String latestVersion, String download, List<String> requiredParameters) {
+        super(updater, SourceType.FILE, name, requiredParameters);
         this.latestVersion = latestVersion;
         this.download = download;
     }
 
     @Override
     public String getLatestVersion(PluginConfig config) {
-        File file = new File(new Replacer().replace(config.getPlaceholders()).replaceIn(latestVersion));
+        File file = new File(new Replacer().replace(config.getParameters()).replaceIn(latestVersion));
         if (Files.isSymbolicLink(file.toPath())) {
             try {
                 Path linked = Files.readSymbolicLink(file.toPath());
@@ -71,7 +71,7 @@ public class FileSource extends UpdateSource {
 
     @Override
     public URL getUpdateUrl(PluginConfig config) throws MalformedURLException, FileNotFoundException {
-        File file = new File(new Replacer().replace(config.getPlaceholders()).replaceIn(download));
+        File file = new File(new Replacer().replace(config.getParameters()).replaceIn(download));
         if (file.exists()) {
             return file.toURI().toURL();
         }
@@ -82,7 +82,7 @@ public class FileSource extends UpdateSource {
     public File downloadUpdate(PluginConfig config) {
         String version = getLatestVersion(config);
         if (version != null) {
-            File source = new File(new Replacer().replace(config.getPlaceholders()).replaceIn(download));
+            File source = new File(new Replacer().replace(config.getParameters()).replaceIn(download));
             File target = new File(updater.getTempFolder(), config.getFileName(version) + "-" + source.getName());
 
             try {

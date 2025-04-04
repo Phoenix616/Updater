@@ -58,16 +58,16 @@ public class ModrinthSource extends UpdateSource {
         try {
             String versionUrl = VERSION_URL;
             List<String> properties = new ArrayList<>(Arrays.asList("Accept", API_HEADER));
-            if (config.getPlaceholders().containsKey("platform")) {
+            if (config.getParameters().containsKey("platform")) {
                 versionUrl += "&loaders=[\"%platform%\"]";
             }
-            if (config.getPlaceholders().containsKey("platform-version")) {
+            if (config.getParameters().containsKey("platform-version")) {
                 versionUrl += "&game_versions=[\"%platform-version%\"]";
             }
-            if (!config.getPlaceholders().containsKey("featured")) {
-                config.getPlaceholders().put("featured", "true");
+            if (!config.getParameters().containsKey("featured")) {
+                config.getParameters().put("featured", "true");
             }
-            String s = updater.query(new URL(new Replacer().replace(config.getPlaceholders("project")).replaceIn(versionUrl)), properties.toArray(new String[0]));
+            String s = updater.query(new URL(new Replacer().replace(config.getParameters("project")).replaceIn(versionUrl)), properties.toArray(new String[0]));
             if (s != null) {
                 try {
                     JsonElement json = new JsonParser().parse(s);

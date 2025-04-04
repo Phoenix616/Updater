@@ -46,7 +46,7 @@ import java.util.logging.Level;
 
 public class TeamCitySource extends UpdateSource {
 
-    private static final List<String> REQUIRED_PLACEHOLDERS = Arrays.asList("buildtype");
+    private static final List<String> REQUIRED_PARAMETERS = List.of("buildtype");
     private final static String BUILD_URL = "%apiurl%/app/rest/builds/project:%project%,status:SUCCESS,branch:%branch%,buildType:%buildtype%";
     private final static String ARTIFACTS_URL = "%apiurl%/app/rest/builds/id:%buildid%/artifacts";
     private final static String ARTIFACT_DOWNLOAD_URL = "%apiurl%/app/rest/builds/id:%buildid%/artifacts/content/%filename%";
@@ -54,7 +54,7 @@ public class TeamCitySource extends UpdateSource {
     private final String token;
 
     public TeamCitySource(String name, Updater updater, String url, String token) {
-        super(updater, SourceType.TEAMCITY, name, REQUIRED_PLACEHOLDERS);
+        super(updater, SourceType.TEAMCITY, name, REQUIRED_PARAMETERS);
         this.url = url;
         this.token = token;
     }
@@ -113,7 +113,7 @@ public class TeamCitySource extends UpdateSource {
 
                     String artifactInfo = updater.query(new URL(new Replacer()
                             .replace("apiurl", url, "buildid", id)
-                            .replace(config.getPlaceholders("project"))
+                            .replace(config.getParameters("project"))
                             .replaceIn(getUrl(ARTIFACTS_URL))
                     ), properties.toArray(new String[0]));
                     if (artifactInfo != null) {
@@ -128,7 +128,7 @@ public class TeamCitySource extends UpdateSource {
 
                                     return new URL(new Replacer()
                                             .replace("apiurl", url, "buildid", id, "filename", fileName)
-                                            .replace(config.getPlaceholders("project"))
+                                            .replace(config.getParameters("project"))
                                             .replaceIn(getUrl(ARTIFACT_DOWNLOAD_URL))
                                     );
                                 }
@@ -162,7 +162,7 @@ public class TeamCitySource extends UpdateSource {
 
                         String artifactInfo = updater.query(new URL(new Replacer()
                                 .replace("apiurl", url, "buildid", id)
-                                .replace(config.getPlaceholders("project"))
+                                .replace(config.getParameters("project"))
                                 .replaceIn(getUrl(ARTIFACTS_URL))
                         ), properties.toArray(new String[0]));
                         if (artifactInfo != null) {
@@ -179,7 +179,7 @@ public class TeamCitySource extends UpdateSource {
                                         try {
                                             URL source = new URL(new Replacer()
                                                     .replace("apiurl", url, "buildid", id, "filename", fileName)
-                                                    .replace(config.getPlaceholders("project"))
+                                                    .replace(config.getParameters("project"))
                                                     .replaceIn(getUrl(ARTIFACT_DOWNLOAD_URL))
                                             );
 
@@ -218,7 +218,7 @@ public class TeamCitySource extends UpdateSource {
         Replacer replacer = new Replacer()
                 .replace("apiurl", url, "branch", "default:any");
         // Workaround for teamcity not liking forward slashes in their query url
-        for (Map.Entry<String, String> entry : config.getPlaceholders("project").entrySet()) {
+        for (Map.Entry<String, String> entry : config.getParameters("project").entrySet()) {
             if (entry.getValue().contains("/")) {
                 replacer.replace(entry.getKey(), "($base64:" + Base64.getEncoder().encodeToString(entry.getValue().getBytes()) + ")");
             } else {

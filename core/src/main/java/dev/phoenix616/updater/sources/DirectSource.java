@@ -49,8 +49,12 @@ public class DirectSource extends UpdateSource {
     private final String downloadRegex;
 
     public DirectSource(String name, Updater updater, Config config) {
-        super(updater, SourceType.DIRECT, name, config.hasPath("required-placeholders")
-                ? config.getStringList("required-placeholders") : Collections.emptyList());
+        super(updater, SourceType.DIRECT, name,
+                config.hasPath("required-parameters")
+                        ? config.getStringList("required-parameters")
+                        : config.hasPath("required-placeholders")
+                                ? config.getStringList("required-placeholders")
+                                : Collections.emptyList());
         this.latestVersion = config.getString("latest-version");
         this.download = config.getString("download");
         this.versionPath = config.hasPath("version-json-path") ? config.getString("version-json-path") : null;
@@ -62,7 +66,7 @@ public class DirectSource extends UpdateSource {
     @Override
     public String getLatestVersion(PluginConfig config) {
         try {
-            Replacer replacer = new Replacer().replace(config.getPlaceholders());
+            Replacer replacer = new Replacer().replace(config.getParameters());
             String r = updater.query(new URL(replacer.replaceIn(latestVersion)));
             if (r != null && !r.isEmpty()) {
                 try {
@@ -85,7 +89,7 @@ public class DirectSource extends UpdateSource {
     public URL getUpdateUrl(PluginConfig config) throws MalformedURLException {
         String version = getLatestVersion(config);
         if (version != null) {
-            Replacer replacer = new Replacer().replace(config.getPlaceholders()).replace("version", version);
+            Replacer replacer = new Replacer().replace(config.getParameters()).replace("version", version);
             if (downloadPath == null && downloadRegex == null) {
                 return new URL(replacer.replaceIn(download));
             }
