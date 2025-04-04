@@ -55,7 +55,6 @@ The program uses multiple configuration files for specifying where the updates f
   Required plugin placeholders: `user`
   Optional: `repository` (Defaults to plugin name), `token`, `apiurl` (Defaults to `https://gitlab.com/api/v4/`)
 - `hangar` Downloads Hangar.papermc.io releases.
-  Required plugin placeholders: `user`
   Optional: `project` (Defaults to plugin name), `channel`, `platform`, `platform-version`
 - `modrinth` Downloads Modrinth releases.
   Optional placeholders: `project` (Defaults to plugin name), `featured` (Defaults to true), `platform`, `platform-version`
