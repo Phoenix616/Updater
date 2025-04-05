@@ -41,18 +41,18 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.logging.Level;
 
 public class HangarSource extends UpdateSource {
 
-    private static final List<String> REQUIRED_PARAMETERS = List.of("user");
     private static final String API_HEADER = "application/json";
     private static final String VERSION_URL = "https://hangar.papermc.io/api/v1/projects/%project%/versions?limit=1&offset=0";
 
     public HangarSource(Updater updater) {
-        super(updater, SourceType.HANGAR, REQUIRED_PARAMETERS);
+        super(updater, SourceType.HANGAR, Collections.emptyList());
     }
 
     private JsonObject getLatestRelease(PluginConfig config) {
