@@ -132,6 +132,13 @@ public class GitHubSource extends UpdateSource {
             String userPass = config.getParameters().get("username") + ":" + config.getParameters().get("password");
             Collections.addAll(properties, "Authorization", "Basic " + Base64.getEncoder().encodeToString(userPass.getBytes()));
         }
+        String channel = config.getParameters().get("channel");
+        if (channel != null && !"release".equals(channel) && !"prerelease".equals(channel)) {
+            updater.log(Level.SEVERE, "Invalid channel '" + channel + " for " + config.getName() + " from source " + getName() + "! Must be 'release' or 'prerelease'.");
+            return null;
+        }
+        String draft = config.getParameters().get("draft");
+        String author = config.getParameters().get("author");
         String s = updater.query(new URL(new Replacer().replace(config.getParameters("repository")).replaceIn(RELEASES_URL)), properties.toArray(new String[0]));
         if (s != null) {
             try {
@@ -142,7 +149,25 @@ public class GitHubSource extends UpdateSource {
                                 && ((JsonObject) release).has("tag_name")
                                 && ((JsonObject) release).has("assets")
                                 && ((JsonObject) release).get("assets").isJsonArray()) {
-                            for (JsonElement asset : ((JsonArray) ((JsonObject) release).get("assets"))) {
+                            boolean isPrerelease = ((JsonObject) release).has("prerelease") && ((JsonObject) release).get("prerelease").getAsBoolean();
+                            boolean isDraft = ((JsonObject) release).has("draft") && ((JsonObject) release).get("draft").getAsBoolean();
+                            if (isDraft && !"true".equalsIgnoreCase(draft)) {
+                                continue;
+                            }
+                            if ("release".equalsIgnoreCase(channel) && isPrerelease) {
+                                continue;
+                            } else if ("prerelease".equalsIgnoreCase(channel) && !isPrerelease) {
+                                continue;
+                            }
+
+                            if (author != null && !author.isEmpty() && ((JsonObject) release).has("author")) {
+                                String authorName = ((JsonObject) release).get("author").getAsJsonObject().get("login").getAsString();
+                                if (!author.equalsIgnoreCase(authorName)) {
+                                    continue;
+                                }
+                            }
+
+                            for (JsonElement asset : ((JsonObject) release).getAsJsonArray("assets")) {
                                 if (matches(config, asset)) {
                                     return new URL(((JsonObject) asset).get("browser_download_url").getAsString());
                                 }
