@@ -50,7 +50,7 @@ The program uses multiple configuration files for specifying where the updates f
   Required plugin parameters: `pluginid` (can be obtained from [here](https://servermods.forgesvc.net/servermods/projects?search=worldedit))
 - `github` Downloads GitHub releases.  
   Required plugin parameters: `user`
-  Optional: `repository` (Defaults to plugin name), `file-pattern` (to match a specific file of a release), `token` or `username` and `password`
+  Optional: `repository` (Defaults to plugin name), `channel` (the type of this release, can be `release`, `prerelease`), `draft` (if `true` it will get draft releases too, requires login), `author` (the name of the user that created the release), `file-pattern` (to match a specific file of a release), `token` or `username` and `password`
 - `gitlab` Downloads GitLab releases.  
   Required plugin parameters: `user`
   Optional: `repository` (Defaults to plugin name), `token`, `apiurl` (Defaults to `https://gitlab.com/api/v4/`)
