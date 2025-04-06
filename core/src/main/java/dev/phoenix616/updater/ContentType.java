@@ -38,4 +38,8 @@ public enum ContentType {
         }
         return false;
     }
+
+    public boolean urlMatches(String string) {
+        return string != null && string.endsWith("." + name().toLowerCase());
+    }
 }

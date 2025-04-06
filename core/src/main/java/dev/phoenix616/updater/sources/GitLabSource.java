@@ -24,6 +24,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import de.themoep.minedown.adventure.Replacer;
+import dev.phoenix616.updater.ContentType;
 import dev.phoenix616.updater.PluginConfig;
 import dev.phoenix616.updater.Updater;
 
@@ -36,9 +37,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class GitLabSource extends UpdateSource {
 
@@ -53,37 +55,9 @@ public class GitLabSource extends UpdateSource {
     @Override
     public String getLatestVersion(PluginConfig config) {
         try {
-            Replacer replacer = new Replacer().replace("apiurl", API_URL).replace(config.getParameters("repository"));
-            String[] properties = new String[0];
-            if (config.getParameters().containsKey("token")) {
-                properties = new String[] {"Private-Token", config.getParameters().get("token")};
-            }
-            String s = updater.query(new URL(replacer.replaceIn(RELEASES_URL)), properties);
-            if (s != null) {
-                try {
-                    JsonElement json = new JsonParser().parse(s);
-                    if (json.isJsonArray() && ((JsonArray) json).size() > 0) {
-                        for (JsonElement release : ((JsonArray) json)) {
-                            if (release.isJsonObject()
-                                    && ((JsonObject) release).has("tag_name")
-                                    && ((JsonObject) release).has("assets")
-                                    && ((JsonObject) release).get("assets").isJsonObject()) {
-                                JsonObject assets = ((JsonObject) release).getAsJsonObject("assets");
-                                if (assets.has("links") && assets.get("links").isJsonArray()) {
-                                    for (JsonElement asset : assets.getAsJsonArray("links")) {
-                                        if (asset.isJsonObject()
-                                                && (((JsonObject) asset).get("name").getAsString().endsWith(".jar")
-                                                        || ((JsonObject) asset).get("url").getAsString().endsWith(".jar"))) {
-                                            return ((JsonObject) release).get("tag_name").getAsString();
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } catch (JsonParseException e) {
-                    updater.log(Level.SEVERE, "Invalid Json returned when getting latest version for " + config.getName() + " from source " + getName() + ": " + s + ". Error: " + e.getMessage());
-                }
+            Release release = getRelease(config);
+            if (release != null) {
+                return release.tagName();
             }
         } catch (MalformedURLException e) {
             updater.log(Level.SEVERE, "Invalid URL for getting latest version for " + config.getName() + " from source " + getName() + "! " + e.getMessage());
@@ -93,12 +67,25 @@ public class GitLabSource extends UpdateSource {
 
     @Override
     public URL getUpdateUrl(PluginConfig config) throws MalformedURLException, FileNotFoundException {
+        Release release = getRelease(config);
+        if (release != null) {
+            return new URL(release.downloadUrl());
+        }
+        throw new FileNotFoundException("Not found");
+    }
+
+    private Release getRelease(PluginConfig config) throws MalformedURLException {
         Replacer replacer = new Replacer().replace("apiurl", API_URL).replace(config.getParameters("repository"));
-        String s = updater.query(new URL(replacer.replaceIn(RELEASES_URL)), "Accept", "application/vnd.github.v3+json");
+        String[] properties = new String[0];
+        if (config.getParameters().containsKey("token")) {
+            properties = new String[]{"Private-Token", config.getParameters().get("token")};
+        }
+        String s = updater.query(new URL(replacer.replaceIn(RELEASES_URL)), properties);
         if (s != null) {
             try {
                 JsonElement json = new JsonParser().parse(s);
                 if (json.isJsonArray() && ((JsonArray) json).size() > 0) {
+                    String author = config.getParameters().get("author");
                     for (JsonElement release : ((JsonArray) json)) {
                         if (release.isJsonObject()
                                 && ((JsonObject) release).has("tag_name")
@@ -106,11 +93,20 @@ public class GitLabSource extends UpdateSource {
                                 && ((JsonObject) release).get("assets").isJsonObject()) {
                             JsonObject assets = ((JsonObject) release).getAsJsonObject("assets");
                             if (assets.has("links") && assets.get("links").isJsonArray()) {
+
+                                if (author != null && !author.isEmpty() && ((JsonObject) release).has("author")) {
+                                    String authorName = ((JsonObject) release).get("author").getAsJsonObject().get("username").getAsString();
+                                    if (!author.equalsIgnoreCase(authorName)) {
+                                        continue;
+                                    }
+                                }
+
                                 for (JsonElement asset : assets.getAsJsonArray("links")) {
-                                    if (asset.isJsonObject()
-                                            && (((JsonObject) asset).get("name").getAsString().endsWith(".jar")
-                                            || ((JsonObject) asset).get("url").getAsString().endsWith(".jar"))) {
-                                        return new URL(((JsonObject) asset).get("url").getAsString());
+                                    if (matches(config, asset)) {
+                                        return new Release(
+                                                ((JsonObject) release).get("tag_name").getAsString(),
+                                                ((JsonObject) asset).get("name").getAsString(),
+                                                ((JsonObject) asset).get("url").getAsString());
                                     }
                                 }
                             }
@@ -121,66 +117,68 @@ public class GitLabSource extends UpdateSource {
                 updater.log(Level.SEVERE, "Invalid Json returned when getting latest version for " + config.getName() + " from source " + getName() + ": " + s + ". Error: " + e.getMessage());
             }
         }
-        throw new FileNotFoundException("Not found");
+        return null;
+    }
+
+    private boolean matches(PluginConfig config, JsonElement asset) {
+        if (asset.isJsonObject()
+                && ((JsonObject) asset).has("url")
+                && ((JsonObject) asset).has("name")) {
+            String url = ((JsonObject) asset).get("url").getAsString();
+            if (ContentType.JAR.urlMatches(url) || ContentType.ZIP.urlMatches(url)) {
+                String filePatternString = config.getParameters().get("file-pattern");
+                if (filePatternString == null) {
+                    return true;
+                }
+                try {
+                    Pattern filePattern = Pattern.compile(filePatternString);
+                    String name = ((JsonObject) asset).get("name").getAsString();
+                    return filePattern.matcher(name).matches();
+                } catch (PatternSyntaxException ex) {
+                    updater.log(Level.SEVERE, "Could not compile file-pattern regex " + filePatternString + " for " + config.getName());
+                }
+            }
+        }
+        return false;
     }
 
     @Override
     public File downloadUpdate(PluginConfig config) {
         try {
-            Replacer replacer = new Replacer().replace("apiurl", API_URL).replace(config.getParameters("repository"));
-            String s = updater.query(new URL(replacer.replaceIn(RELEASES_URL)), "Accept", "application/vnd.github.v3+json");
-            if (s != null) {
+            Release release = getRelease(config);
+            if (release != null) {
+                String name = release.assetName();
+                String version = release.tagName();
+                updater.log(Level.FINE, "Downloading update file for " + config.getName() + " " + version + ": " + name);
+                File target = new File(updater.getTempFolder(), config.getName() + "-" + name);
+
                 try {
-                    JsonElement json = new JsonParser().parse(s);
-                    if (json.isJsonArray() && ((JsonArray) json).size() > 0) {
-                        for (JsonElement release : ((JsonArray) json)) {
-                            if (release.isJsonObject()
-                                    && ((JsonObject) release).has("tag_name")
-                                    && ((JsonObject) release).has("assets")
-                                    && ((JsonObject) release).get("assets").isJsonObject()) {
-                                JsonObject assets = ((JsonObject) release).getAsJsonObject("assets");
-                                if (assets.has("links") && assets.get("links").isJsonArray()) {
-                                    for (JsonElement asset : assets.getAsJsonArray("links")) {
-                                        if (asset.isJsonObject()
-                                                && (((JsonObject) asset).get("name").getAsString().endsWith(".jar")
-                                                        || ((JsonObject) asset).get("url").getAsString().endsWith(".jar"))) {
-                                            String name = ((JsonObject) asset).get("name").getAsString();
-                                            String version = ((JsonObject) release).get("tag_name").getAsString();
-                                            updater.log(Level.FINE, "Downloading update file for " + config.getName() + " " + version + ": " + name);
-                                            File target = new File(updater.getTempFolder(), config.getName() + "-" + name);
+                    URL source = new URL(release.downloadUrl());
 
-                                            try {
-                                                URL source = new URL(((JsonObject) asset).get("url").getAsString());
-
-                                                HttpURLConnection con = (HttpURLConnection) source.openConnection();
-                                                con.setRequestProperty("User-Agent", updater.getUserAgent());
-                                                if (config.getParameters().containsKey("token")) {
-                                                    con.setRequestProperty("Private-Token", config.getParameters().get("token"));
-                                                }
-                                                con.setUseCaches(false);
-                                                con.connect();
-                                                try (InputStream in = con.getInputStream()) {
-                                                    if (Files.copy(in, target.toPath(), StandardCopyOption.REPLACE_EXISTING) > 0) {
-                                                        return target;
-                                                    }
-                                                }
-                                            } catch (IOException e) {
-                                                updater.log(Level.SEVERE, "Error while trying to download update "
-                                            + version + " for " + config.getName() + " from source " + getName() + "! " + e.getMessage());
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                    HttpURLConnection con = (HttpURLConnection) source.openConnection();
+                    con.setRequestProperty("User-Agent", updater.getUserAgent());
+                    if (config.getParameters().containsKey("token")) {
+                        con.setRequestProperty("Private-Token", config.getParameters().get("token"));
+                    }
+                    con.setUseCaches(false);
+                    con.connect();
+                    try (InputStream in = con.getInputStream()) {
+                        if (Files.copy(in, target.toPath(), StandardCopyOption.REPLACE_EXISTING) > 0) {
+                            return target;
                         }
                     }
-                } catch(JsonParseException e) {
-                    updater.log(Level.SEVERE, "Invalid Json returned when getting latest version for " + config.getName() + " from source " + getName() + ": " + s + ". Error: " + e.getMessage());
+                } catch (IOException e) {
+                    updater.log(Level.SEVERE, "Error while trying to download update "
+                            + version + " for " + config.getName() + " from source " + getName() + "! " + e.getMessage());
                 }
             }
-        } catch(MalformedURLException e){
+        } catch (MalformedURLException e) {
             updater.log(Level.SEVERE, "Invalid URL for getting latest version for " + config.getName() + " from source " + getName() + "! " + e.getMessage());
         }
         return null;
+    }
+
+    record Release(String tagName, String assetName, String downloadUrl) {
+
     }
 }

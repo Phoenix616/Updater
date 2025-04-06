@@ -53,7 +53,7 @@ The program uses multiple configuration files for specifying where the updates f
   Optional: `repository` (Defaults to plugin name), `channel` (the type of this release, can be `release`, `prerelease`), `draft` (if `true` it will get draft releases too, requires login), `author` (the name of the user that created the release), `file-pattern` (to match a specific file of a release), `token` or `username` and `password`
 - `gitlab` Downloads GitLab releases.  
   Required plugin parameters: `user`
-  Optional: `repository` (Defaults to plugin name), `token`, `apiurl` (Defaults to `https://gitlab.com/api/v4/`)
+  Optional: `repository` (Defaults to plugin name), `token`, `apiurl` (Defaults to `https://gitlab.com/api/v4/`),  `author` (the name of the user that created the release), `file-pattern` (to match a specific file of a release), `token`
 - `hangar` Downloads Hangar.papermc.io releases.
   Optional: `project` (Defaults to plugin name), `channel`, `platform`, `platform-version`
 - `modrinth` Downloads Modrinth releases.
