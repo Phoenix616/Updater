@@ -126,6 +126,7 @@ public class GitHubSource extends UpdateSource {
                                     return new Release(
                                             ((JsonObject) release).get("tag_name").getAsString(),
                                             ((JsonObject) asset).get("name").getAsString(),
+                                            ((JsonObject) asset).get("url").getAsString(),
                                             ((JsonObject) asset).get("browser_download_url").getAsString()
                                     );
                                 }
@@ -145,6 +146,7 @@ public class GitHubSource extends UpdateSource {
 
     private boolean matches(PluginConfig config, JsonElement asset) {
         if (asset.isJsonObject()
+                && ((JsonObject) asset).has("url")
                 && ((JsonObject) asset).has("browser_download_url")
                 && ((JsonObject) asset).has("content_type")
                 && ((JsonObject) asset).has("name")) {
@@ -177,11 +179,10 @@ public class GitHubSource extends UpdateSource {
                 File target = new File(updater.getTempFolder(), config.getName() + "-" + version + "-" + name);
 
                 try {
-                    URL source = new URL(release.downloadUrl());
+                    URL source = new URL(release.assetUrl());
 
                     HttpURLConnection con = (HttpURLConnection) source.openConnection();
                     con.setRequestProperty("User-Agent", updater.getUserAgent());
-                    con.addRequestProperty("Accept", API_HEADER);
                     con.addRequestProperty("Accept", "application/octet-stream");
                     if (config.getParameters().containsKey("token")) {
                         con.addRequestProperty("Authorization", "token " + config.getParameters().get("token"));
@@ -198,6 +199,7 @@ public class GitHubSource extends UpdateSource {
                     }
                 } catch (IOException e) {
                     updater.log(Level.SEVERE, "Error while trying to download update " + version + " for " + config.getName() + " from source " + getName() + "! " + e.getMessage());
+                    updater.log(Level.INFO, "You can try to download the file manually from " + release.downloadUrl());
                 }
             }
         } catch (MalformedURLException e) {
@@ -206,7 +208,7 @@ public class GitHubSource extends UpdateSource {
         return null;
     }
 
-    record Release(String tagName, String assetName, String downloadUrl) {
+    record Release(String tagName, String assetName, String assetUrl, String downloadUrl) {
 
     }
 }
