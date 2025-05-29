@@ -352,9 +352,10 @@ public abstract class Updater {
     }
 
     private boolean check(PluginConfig plugin, boolean update, boolean dontLink) {
+        String installedVersion = getInstalledVersion(plugin);
         String latestVersion = plugin.getSource().getLatestVersion(plugin);
-        if (latestVersion != null && isNewVersion(plugin, latestVersion)) {
-            log(Level.INFO, "Found new version of " + plugin.getName() + " on " + plugin.getSource().getName() + ": " + latestVersion);
+        if (latestVersion != null && isNewVersion(installedVersion, latestVersion)) {
+            log(Level.INFO, "Found new version of " + plugin.getName() + (installedVersion != null ? " " + installedVersion : "") + " on " + plugin.getSource().getName() + ": " + latestVersion);
 
             if (update) {
                 log(Level.INFO, "Downloading " + plugin.getName() + " " + latestVersion + "...");
@@ -449,8 +450,7 @@ public abstract class Updater {
         return false;
     }
 
-    private boolean isNewVersion(PluginConfig plugin, String latestVersion) {
-        String installedVersion = getInstalledVersion(plugin);
+    private boolean isNewVersion(String installedVersion, String latestVersion) {
         if (installedVersion != null) {
             installedVersion = sanitize(installedVersion);
             latestVersion = sanitize(latestVersion);
