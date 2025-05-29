@@ -26,6 +26,7 @@ public enum ContentType {
     ZIP("zip", "x-zip", "x-zip-compressed", "x-compressed");
 
     private static final String APPLICATION = "application/";
+    private static final String BINARY = "binary/";
     private final HashSet<String> types = new HashSet<>();
 
     ContentType(String... types) {
@@ -33,8 +34,12 @@ public enum ContentType {
     }
 
     public boolean matches(String string) {
-        if (string != null && string.startsWith(APPLICATION)) {
-            return types.contains(string.substring(APPLICATION.length()));
+        if (string != null) {
+            if (string.startsWith(APPLICATION)) {
+                return types.contains(string.substring(APPLICATION.length()));
+            } else if (string.startsWith(BINARY)) {
+                return types.contains(string.substring(BINARY.length()));
+            }
         }
         return false;
     }
