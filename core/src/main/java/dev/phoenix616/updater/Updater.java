@@ -458,13 +458,8 @@ public abstract class Updater {
             try {
                 // Try parsing them as build numbers
                 int installedBuild = Integer.parseInt(installedVersion);
-                try {
-                    int latestBuild = Integer.parseInt(latestVersion);
-                    return installedBuild < latestBuild;
-                } catch (NumberFormatException e) {
-                    // if installed is integer but latest isn't then we assume that the format changed and treat it as new
-                    return true;
-                }
+                int latestBuild = Integer.parseInt(latestVersion);
+                return installedBuild < latestBuild;
             } catch (NumberFormatException ignored) {}
 
             if (installedVersion.indexOf('.') > 0 && latestVersion.indexOf('.') > 0) {
@@ -472,10 +467,10 @@ public abstract class Updater {
                     int[] installedSemVer = parseSemVer(installedVersion);
                     int[] latestSemVer = parseSemVer(latestVersion);
                     return compareTo(latestSemVer, installedSemVer) > 0;
-                } catch (NumberFormatException e) {
-                    return true;
-                }
+                } catch (NumberFormatException ignored) {}
             }
+            // If we cannot parse the versions we just ensure that they aren't equal
+            return !installedVersion.equalsIgnoreCase(latestVersion);
         }
         return true;
     }
@@ -500,7 +495,11 @@ public abstract class Updater {
     }
 
     public static String sanitize(String version) {
-        return version.split("[\\s(\\-#\\[{]", 2)[0];
+        String versionPart = version.split("[\\s(\\-#\\[{]", 2)[0];
+        if (versionPart.startsWith("v")) {
+            return versionPart.substring(1);
+        }
+        return versionPart;
     }
 
     private int[] parseSemVer(String version) throws NumberFormatException {
