@@ -72,6 +72,7 @@ public abstract class Updater {
 
     public static final Pattern GITHUB_PATTERN = Pattern.compile(".*https?://(?:www\\.)?github\\.com/(?<user>[\\w\\-]+)/(?<repo>[\\w\\-]+)(?:[/#].*)?.*");
     public static final Pattern HANGAR_PATTERN = Pattern.compile(".*https?://hangar\\.papermc\\.io/(?<author>[\\w\\-]+)/(?<project>[\\w\\-]+)(?:[/#].*)?.*");
+    public static final Pattern MODRINTH_PATTERN = Pattern.compile(".*https?://(?:www\\.)?modrinth\\.com/(?<type>[\\w\\-]+)/(?<project>[\\w\\-]+)(?:[/#].*)?.*");
     public static final Pattern SPIGOT_PATTERN = Pattern.compile(".*https?://(?:www\\.)?spigotmc\\.org/resources/.*\\.(?<id>\\d+)(?:[/#].*)?.*");
     private final Map<String, UpdateSource> sources = new HashMap<>();
     private final Map<String, PluginConfig> plugins = new HashMap<>();
@@ -289,11 +290,14 @@ public abstract class Updater {
             }
             try {
                 ZipFile jar = new ZipFile(file);
-                ZipEntry pluginDescription = jar.getEntry("plugin.yml");
-                if (pluginDescription == null) {
-                    pluginDescription = jar.getEntry("bungee.yml");
-                }
-                if (pluginDescription != null) {
+                List<ZipEntry> pluginDescriptions = new ArrayList<>();
+                Optional.ofNullable(jar.getEntry("paper-plugin.yml")).ifPresent(pluginDescriptions::add);
+                Optional.ofNullable(jar.getEntry("plugin.yml")).ifPresent(pluginDescriptions::add);
+                Optional.ofNullable(jar.getEntry("bungee.yml")).ifPresent(pluginDescriptions::add);
+                Optional.ofNullable(jar.getEntry("velocity-plugin.json")).ifPresent(pluginDescriptions::add);
+                Optional.ofNullable(jar.getEntry("fabric.mod.json")).ifPresent(pluginDescriptions::add);
+                Optional.ofNullable(jar.getEntry("META-INF/MANIFEST.MF")).ifPresent(pluginDescriptions::add);
+                for (ZipEntry pluginDescription : pluginDescriptions) {
                     try (BufferedReader in = new BufferedReader(new InputStreamReader(jar.getInputStream(pluginDescription)))) {
                         String line;
                         while ((line = in.readLine()) != null) {
@@ -301,7 +305,7 @@ public abstract class Updater {
                             if (hangarMatcher.matches()) {
                                 String hangarAuthor = hangarMatcher.group("author");
                                 String hangarProject = hangarMatcher.group("project");
-                                log(Level.INFO, "Found link to a Hanger project page in " + file.getName() + "! If you want to update from there add the following to your plugins config:\n\n"
+                                log(Level.INFO, "Found link to a Hanger project page in " + file.getName() + "/" + pluginDescription.getName() + "! If you want to update from there add the following to your plugins config:\n\n"
                                         + pluginName + " {\n"
                                         + "  source = hangar\n"
                                         + "  parameters {\n"
@@ -310,10 +314,21 @@ public abstract class Updater {
                                         + "  }\n"
                                         + "}\n");
                             }
+                            Matcher modrinthMatcher = MODRINTH_PATTERN.matcher(line);
+                            if (modrinthMatcher.matches()) {
+                                String modrinthProject = modrinthMatcher.group("project");
+                                log(Level.INFO, "Found link to a Modrinth project page in " + file.getName() + "/" + pluginDescription.getName() + "! If you want to update from there add the following to your plugins config:\n\n"
+                                        + pluginName + " {\n"
+                                        + "  source = modrinth\n"
+                                        + "  parameters {\n"
+                                        + "    project = " + modrinthProject + "\n"
+                                        + "  }\n"
+                                        + "}\n");
+                            }
                             Matcher spigotMatcher = SPIGOT_PATTERN.matcher(line);
                             if (spigotMatcher.matches()) {
                                 String id = spigotMatcher.group("id");
-                                log(Level.INFO, "Found link to SpigotMC resource page in " + file.getName() + "! If you want to update from there add the following to your plugins config:\n\n"
+                                log(Level.INFO, "Found link to SpigotMC resource page in " + file.getName() + "/" + pluginDescription.getName() + "! If you want to update from there add the following to your plugins config:\n\n"
                                         + pluginName + " {\n"
                                         + "  source = spigot\n"
                                         + "  parameters {\n"
@@ -325,7 +340,7 @@ public abstract class Updater {
                             if (ghMatcher.matches()) {
                                 String ghUser = ghMatcher.group("user");
                                 String ghRepository = ghMatcher.group("repo");
-                                log(Level.INFO, "Found link to GitHub repository in " + file.getName() + "! If you want to update from there add the following to your plugins config:\n\n"
+                                log(Level.INFO, "Found link to GitHub repository in " + file.getName() + "/" + pluginDescription.getName() + "! If you want to update from there add the following to your plugins config:\n\n"
                                         + pluginName + " {\n"
                                         + "  source = github\n"
                                         + "  parameters {\n"
