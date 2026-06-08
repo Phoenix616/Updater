@@ -94,13 +94,14 @@ public class Main {
             }
         };
 
-        if (!updater.run( args)){
+        if (!updater.run( args)) {
             System.out.print("Usage: " + p.getProperty("application.name") + ".jar <options>\n"
                     + " -t <path>, --target-folder <path> Target folder where updates get downloaded to (Required)\n"
                     + " -p <name>, --plugin <name>        Only check/update one plugin (Optional)\n"
                     + " -c, --check-only                  Only check for new versions, don't download updates (Optional)\n"
                     + " -d, --dont-link                   Only download new versions, don't link them (Optional)\n"
                     + " -l <level>, --log-level <level>   Only print messages of the specified level or higher (Optional, default: INFO)\n"
+                    + " --dont-search-existing-jars       Don't search for existing jars in the target folder to find new plugins (Optional)\n"
             );
         }
         tempFolder.delete();
