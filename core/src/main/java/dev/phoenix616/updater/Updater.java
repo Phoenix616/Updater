@@ -150,6 +150,9 @@ public abstract class Updater {
         Config pluginsConfig = getConfig("plugins");
 
         for (String pluginName : pluginsConfig.root().keySet()) {
+            if (pluginName.startsWith("-") || pluginName.startsWith(".")) {
+                continue;
+            }
             try {
                 Config pluginConfig = pluginsConfig.getConfig(pluginName).withFallback(PLUGIN_DEFAULTS);
                 UpdateSource source = getSource(pluginConfig.getString("source"));
